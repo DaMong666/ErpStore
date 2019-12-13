@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文本</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+<link href="../../css/pagination.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="../../js/common.js"></script>
+<script type="text/javascript" src="../../js/pagination.min.js"></script>
+<script type="text/javascript" src="inventoryList.js"></script>
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>仓库管理</li>
+    <li>出库管理</li>
+    <li>基本内容</li>
+  </ul>
+</div>
+<div class="rightinfo">
+  <form id="form">
+    <ul class="tools">
+      <li>仓库名称:
+        <input type="text" name="storageName"/>
+      </li>
+      <li>商品品牌:
+        <input type="text" name="brandName" />
+      </li>
+      <li>商品类型:
+        <input type="text" name="goodType" />
+      </li>
+      <li>商品名称:
+        <input type="text" name="goodName"/>
+      </li>
+      <li class="subBut" onclick="inventoryPage(1);"><img src="../../images/t06.png" />查询</li>
+    </ul>
+    <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>仓库名称</th>
+          <th>商品品牌</th>
+          <th>商品类型</th>
+          <th>商品名称</th>
+          <th>厂商名称</th>
+          <th>商品数量</th>
+          <th>单位</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+    <div id="pagination_5" align="right"></div>
+    <input name="pageNo" type="hidden" />
+  </form>
+</div>
+<script type="text/javascript">
+
+</script>
+</body>
+</html>

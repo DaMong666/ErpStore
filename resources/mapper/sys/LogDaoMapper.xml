@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.LogDao">
+
+    <resultMap id="logMap" type="com.ztkj.sys.model.Log">
+        <id property="id" column="f_id" />
+        <result property="content" column="f_content" />
+        <result property="createTime" column="f_createTime" jdbcType="TIMESTAMP" />
+        <result property="moduleName" column="f_moduleName" />
+        <association property="userId" column="f_userId" resultMap="userMap" />
+    </resultMap>
+
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userId" />
+        <result property="no" column="f_userNo" />
+        <result property="name" column="f_userName" />
+    </resultMap>
+
+    <resultMap id="moduleMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_moduleId" />
+        <result property="name" column="f_moduleName" />
+    </resultMap>
+
+    <!--模糊+分页-->
+    <select id="findByPage" resultMap="logMap">
+        SELECT T.*
+            FROM (SELECT L.*,U.F_NAME AS F_USERNAME,U.F_NO F_USERNO,ROWNUM RN
+                FROM T_LOG L, T_USER U
+                <where>
+                    AND L.F_USERID = U.F_ID
+                    <![CDATA[AND ROWNUM <= #{endIndex}]]>
+                    <if test="logParam.userNo != null and logParam.userNo != ''">
+                        AND U.F_NO = #{logParam.userNo}
+                    </if>
+                    <if test="logParam.userName != null and logParam.userName != ''">
+                        AND U.F_NAME LIKE '%'||#{logParam.userName}||'%'
+                    </if>
+                    <if test="logParam.content != null and logParam.content != ''">
+                        AND F_CONTENT LIKE '%'||#{logParam.content}||'%'
+                    </if>
+                    <if test="logParam.moduleName != null and logParam.moduleName != ''">
+                        AND L.F_MODULENAME LIKE '%'||#{logParam.moduleName}||'%'
+                    </if>
+                    <if test="logParam.beginDate != null">
+                        AND L.F_CREATETIME >  #{logParam.beginDate}
+                    </if>
+                    <if test="logParam.endDate != null">
+                        <![CDATA[AND L.F_CREATETIME < #{logParam.endDate}]]>
+                    </if>
+                </where>
+                ORDER BY L.F_ID DESC) T
+            WHERE RN >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT COUNT(L.F_ID)
+        FROM T_LOG L, T_USER U
+        <where>
+            AND L.F_USERID = U.F_ID
+            <if test="logParam.userNo != null and logParam.userNo != ''">
+                AND U.F_NO = #{logParam.userNo}
+            </if>
+            <if test="logParam.userName != null and logParam.userName != ''">
+                AND U.F_NAME LIKE '%'||#{logParam.userName}||'%'
+            </if>
+            <if test="logParam.content != null and logParam.content != ''">
+                AND F_CONTENT LIKE '%'||#{logParam.content}||'%'
+            </if>
+            <if test="logParam.moduleName != null and logParam.moduleName != ''">
+                AND L.F_MODULENAME LIKE '%'||#{logParam.moduleName}||'%'
+            </if>
+            <if test="logParam.beginDate != null">
+                AND L.F_CREATETIME >  #{logParam.beginDate}
+            </if>
+            <if test="logParam.endDate != null">
+                <![CDATA[AND L.F_CREATETIME < #{logParam.endDate}]]>
+            </if>
+        </where>
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+        <selectKey keyProperty="log.id" resultType="int" order="BEFORE">
+            SELECT seq_log.NEXTVAL FROM dual
+        </selectKey>
+        INSERT INTO T_LOG (F_ID, F_USERID, F_MODULEName, F_CONTENT, F_CREATETIME)
+        VALUES (#{log.id} , #{log.userId.id}, #{log.moduleName}, #{log.content}, SYSDATE)
+    </insert>
+
+    <!--根据Id获取-->
+    <select id="getById" resultMap="logMap">
+        SELECT L.*,U.F_NAME AS F_USERNAME, U.F_NO F_USERNO
+            FROM T_LOG L, T_USER U
+            WHERE L.F_USERID = U.F_ID
+            AND L.F_ID = #{id}
+    </select>
+
+</mapper>

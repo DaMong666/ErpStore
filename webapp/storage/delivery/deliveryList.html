@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文本</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+<link href="../../css/pagination.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="../../js/common.js"></script>
+<script type="text/javascript" src="../../js/pagination.min.js"></script>
+<script type="text/javascript" src="deliveryList.js"></script>
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>仓库管理</li>
+    <li>出库管理</li>
+    <li>基本内容</li>
+  </ul>
+</div>
+<div class="rightinfo">
+  <form id="form">
+    <ul class="tools">
+      <li>仓库名称:
+        <input type="text" name="storageName"/>
+      </li>
+      <li>订单编号:
+        <input type="text" name="orderNo"/>
+      </li>
+      <li>状态:
+        <select name="status">
+            <option value="0">请选择</option>
+            <option value="1">未发货</option>
+            <option value="2">已发货</option>
+            <option value="3">已回款</option>
+            <option value="4">取消订单</option>
+            <option value="5">已退货</option>
+        </select>
+      </li>
+      <li class="subBut" onclick="outstoragePage(1)"><img src="../../images/t06.png" />查询</li>
+      <li id="addstock" class="subBut" onclick="window.location.href='deliveryAdd.html'"><img src="../../images/t01.png" />添加出库</li>
+    </ul>
+    <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>订单编号</th>
+          <th>金额</th>
+          <th>仓库名称</th>
+          <th>出库时间</th>
+          <th>出库人</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+    <div id="pagination_5" align="right"></div>
+    <input name="pageNo" type="hidden" />
+    <!--存放当前登录对象名字-->
+    <input name="currLoginUserName" type="hidden" />
+  </form>
+  <!-- 提示框 -->
+  <div id="tip" class="tip">
+    <div class="tiptop"><span>提示信息</span><a onclick="tipClose()"></a></div>
+    <div class="tipinfo"> <span><img src="../../images/ticon.png" /></span>
+      <div class="tipright">
+        <p></p>
+        <cite>如果是请点击确定按钮 ，否则请点取消。</cite> </div>
+    </div>
+    <div class="tipbtn">
+      <input type="hidden" name="changeNo" /><!--需要出库的采购单号-->
+      <input type="hidden" name="changeStatus" /><!--出库之前的状态-->
+      <input type="hidden" name="action" /><!--执行的操作-->
+      <input name="" type="button"  class="sure" value="确定" onclick="outStoStatus('/storage/outstorage')" />
+      &nbsp;
+      <input name="" type="button"  class="cancel" value="取消" onclick="tipClose()" />
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+
+</script>
+</body>
+</html>

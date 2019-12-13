@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="../../js/jquery.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script type="text/javascript" src="customerAdd.js"></script>
+    <script type="text/javascript" src="customerList.js"></script>
+    <title>无标题文档</title>
+    <link href="../../css/style.css" rel="stylesheet" type="text/css"/>
+</head>
+
+<body>
+<div class="place"><span>位置：</span>
+    <ul class="placeul">
+        <li>营销管理</li>
+        <li>客户管理</li>
+        <li>添加</li>
+    </ul>
+</div>
+<form id="cusAddForm">
+    <div class="formbody">
+        <div class="formtitle"><span>客户信息</span></div>
+        <ul class="forminfo">
+            <li>
+                <label>姓名</label>
+                <input id="name" name="name" type="text" class="dfinput"/>
+                <i>必填，不能超过30个字符</i>
+            </li>
+            <li>
+                <label>性别</label>
+                <cite>
+                    <label><input name="sex" type="radio" value="1" checked/>男</label>
+                    <label><input name="sex" type="radio" value="0" />女</label>
+                </cite>
+            </li>
+            <li>
+                <label>所属公司名称</label>
+                <input id="company" name="company" type="text" class="dfinput"/>
+                <i>必填，不能超过30个字符</i>
+            </li>
+            <li>
+                <label>联系方式</label>
+                <input id="tel" name="tel" type="text" class="dfinput"/>
+                <i>必填，不能超过30个字符</i>
+            </li>
+            <li>
+                <label>联系地址</label>
+                <input id="address" name="address" type="text" class="dfinput"/>
+                <i>必填，不能超过130个字符</i>
+            </li>
+            <li>
+                <label>所属区域</label>
+                <select name="provinceId" id="provinceId" onchange="loadCity();" class="dfselect">
+
+                </select>
+                省
+                <select name="city.cityId" id="cityId" class="dfselect">
+
+                </select>
+                市
+                <i>必选</i>
+            </li>
+            <li>
+                <label>描述</label>
+                <textarea id="description" name="description" class="textinput"></textarea>
+                <i>可选</i>
+            </li>
+            <li>
+                <label>状态</label>
+                <select id="status" name="status" class="dfselect">
+                    <option value="1">可用</option>
+                    <option value="0">不可用</option>
+                </select>
+                <i>必选</i>
+            </li>
+            <li>
+                <label>创建人</label>
+                <input id="createUser" type="text" value="" readonly="readonly" class="roinput"/>
+                <i>不能编辑</i>
+            </li>
+            <li>
+                <label>创建时间</label>
+                <input id="createTime" name="createTime" type="text" value="" readonly="readonly" class="roinput"/>
+                <i>不能编辑</i>
+            </li>
+            <li>
+                <label>&nbsp;</label>
+                <input name="addCus" type="button" class="btn" value="确定" onclick="add();"/>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input name="" type="button" class="btn" value="返回" onclick="window.location.href='customerList.html'"/>
+            </li>
+        </ul>
+    </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>客户管理</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+  <link href="../../css/pagination.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="../../js/calendar.js"></script>
+  <script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="../../js/common.js"></script>
+  <script type="text/javascript" src="../../js/purchase.js"></script>
+  <script type="text/javascript" src="../../js/pagination.min.js"></script>
+  <script type="text/javascript" src="purchaseList.js"></script>
+
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>采购管理</li>
+    <li>采购单管理</li>
+    <li>基本内容</li>
+  </ul>
+</div>
+<div class="rightinfo">
+  <form id="form">
+    <ul class="tools">
+      <li> 采购单编号:
+        <input type="text" name="purchaseNo" />
+      </li>
+      <li> 采购时间:
+        <input type="text" name="beginCreateTime" onclick="SelectDate(this,'yyyy-MM-dd hh:mm:ss')" />-<input type="text"  name="endCreateTime" onclick="SelectDate(this,'yyyy-MM-dd hh:mm:ss')"/>
+      </li>
+      <li> 金额:
+        <input type="text" class="stinput" name="beginMoney" />-<input type="text" class="stinput" name="endMoney" />
+      </li>
+      <li> 审核状态：
+        <select name="status">
+          <option value="">请选择</option>
+          <option value="0">未审核</option>
+          <option value="1">审核中</option>
+          <option value="2">审核通过</option>
+          <option value="3">审核未通过</option>
+        </select>
+      </li>
+      <li class="subBut" onclick="purchasePage(1);"><img src="../../images/t06.png" />查询</li>
+      <li class="subBut" onclick="window.location.href='purchaseAdd.html'"><img src="../../images/t01.png" />添加</li>
+    </ul>
+    <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>采购单编号</th>
+          <th>采购时间</th>
+          <th>金额</th>
+          <th>操作人</th>
+          <th>审核状态</th>
+          <th>审核人</th>
+          <th>审核时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+    <div id="pagination_5" align="right"></div>
+
+    <input name="pageNo" type="hidden" />
+  </form>
+  <!-- 删除提示框 -->
+  <div id="deltip" class="tip">
+    <div class="tiptop"><span>提示信息</span><a onclick="deltipClose()"></a></div>
+    <div class="tipinfo"> <span><img src="../../images/ticon.png" /></span>
+      <div class="tipright">
+        <p>是否确认删除此条信息？</p>
+        <cite>如果是请点击确定按钮 ，否则请点取消。</cite> </div>
+    </div>
+    <div class="tipbtn">
+      <input type="hidden" name="purchaNo" />
+      <input type="hidden" name="deleteStatus" />
+      <input name="" type="button"  class="sure" value="确定" onclick="deletePurchase('/purchase/purchase')" />
+      &nbsp;
+      <input name="" type="button"  class="cancel" value="取消" onclick="deltipClose()" />
+    </div>
+  </div>
+  
+  <!-- 审批提示框 -->
+  <div id="examinetip" class="tip">
+    <div class="tiptop">
+    	<span>提示信息</span><a onclick="examinetipclose()"></a>
+    </div>
+    <form id="examineForm">
+    <div class="tipinfo1">
+        <input type="hidden" name="purchaseNo" id="hiddenNo" />
+        <input type="hidden" name="status" id="hiddenStatus" />
+        部门：
+            <select class="dfselect" disabled="disabled">
+                <option>采购部</option>
+            </select>
+			<p/>
+            职位：
+            <select class="dfselect" id="position" onclick="loadName();" name="checkUser.id">
+                <option value="03001">部门经理</option>
+                <option value="03002">一组主管</option>
+                <option value="03003">二组主管</option>
+            </select>
+   			<p/>
+            姓名：
+            <select class="dfselect" name="checkUser.id" id="pname">
+
+            </select>
+			<p/>
+    </div>
+    <div class="tipbtn">
+      <input name="" type="button"  class="sure" value="确定" onclick="commitExamine();" />
+      &nbsp;
+      <input name="" type="button"  class="cancel" value="取消" onclick="examinetipclose()" />
+    </div>
+    </form>
+  </div>
+</div>
+<script type="text/javascript">
+	$('.tablelist tbody tr:odd').addClass('odd');
+</script>
+</body>
+</html>

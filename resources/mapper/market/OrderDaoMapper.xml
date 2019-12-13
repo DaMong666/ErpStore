@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.market.dao.OrderDao">
+    <!--结果集映射-->
+    <resultMap id="OrderMap" type="com.ztkj.market.model.Order">
+        <id property="orderNo" column="f_orderNo"/>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <result property="money" column="f_money"/>
+        <result property="checkTime" column="f_checkTime"/>
+        <result property="opinion" column="f_opinion"/>
+        <association property="createUser" column="f_createId" resultMap="createMap"/>
+        <association property="user" column="f_userId" resultMap="userMap"/>
+        <association property="customer" column="f_custormer" resultMap="customerMap"/>
+    </resultMap>
+
+    <!-- 创建人 -->
+    <resultMap id="createMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_createid"/>
+        <result property="name" column="f_createname"/>
+    </resultMap>
+
+    <!-- 审核人 -->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_checkid"/>
+        <result property="name" column="f_checkname"/>
+    </resultMap>
+
+    <!-- 客户 -->
+    <resultMap id="customerMap" type="com.ztkj.market.model.Customer">
+        <id property="id" column="f_cusid"/>
+        <result property="name" column="f_cusname"/>
+        <result property="tel" column="f_tel"/>
+    </resultMap>
+
+    <!--模糊+分页查询-->
+    <select id="findByPage" resultMap="OrderMap">
+        select t.* from
+        (select t1.f_orderno f_orderno,t2.f_id f_cusid,t2.f_name f_cusname,t2.f_tel,
+        t1.f_createtime,t1.f_money,t3.f_id f_createid,
+        t3.f_name f_createname,t1.f_status f_status,t4.f_id f_checkid,t4.f_name f_checkname,t1.f_checktime,rownum rn
+        from t_order t1 left join t_customer t2 on t1.f_custormer = t2.f_id
+        left join t_user t3 on t1.f_createid = t3.f_id
+        left join t_user t4 on t1.f_userid = t4.f_id
+        <where>
+            <![CDATA[
+                and rownum <= #{endIndex}
+            ]]>
+            <if test="user.positionNo.no == '02004'">
+                and t3.f_id = #{user.id}
+            </if>
+            <if test="user.positionNo.no == '02005'">
+                and t3.f_id = #{user.id}
+            </if>
+            and t3.f_positionno in (SELECT f_no FROM t_position CONNECT BY PRIOR f_no=f_mgr START WITH f_no=#{user.positionNo.no})
+            <if test="orderParam.orderNo != null and orderParam.orderNo != ''">
+                and t1.f_orderno like '%'||#{orderParam.orderNo}||'%'
+            </if>
+            <if test="orderParam.cusname !=null and orderParam.cusname != ''">
+                and t2.f_name like '%'||#{orderParam.cusname}||'%'
+            </if>
+            <if test="orderParam.beginCreateTime !=null">
+                and t1.f_createtime > #{orderParam.beginCreateTime}
+            </if>
+            <if test="orderParam.endCreateTime !=null">
+                <![CDATA[
+                    and t1.f_createtime <= #{orderParam.endCreateTime}
+                ]]>
+            </if>
+            <if test="orderParam.startMoney != null and orderParam.startMoney != ''">
+                and t1.f_money > #{orderParam.startMoney}
+            </if>
+            <if test="orderParam.endMoney != null and orderParam.endMoney != ''">
+                <![CDATA[
+                    and t1.f_money <= #{orderParam.endMoney}
+                ]]>
+            </if>
+            <if test="orderParam.status != null and orderParam.status != ''">
+                and t1.f_status = #{orderParam.status}
+            </if>
+        </where>
+        ) t where rn >= #{startIndex}
+
+    </select>
+
+    <!--模糊+分页统计-->
+    <select id="countByPage" resultType="int">
+        select count(f_orderno) from
+        (select t1.f_orderno f_orderno,t2.f_id f_cusid,t2.f_name f_cusname,t2.f_tel,
+        t1.f_createtime,t1.f_money,t3.f_id f_createid,
+        t3.f_name f_createname,t1.f_status f_status,t4.f_id f_checkid,t4.f_name f_checkname,t1.f_checktime
+        from t_order t1 left join t_customer t2 on t1.f_custormer = t2.f_id
+        left join t_user t3 on t1.f_createid = t3.f_id
+        left join t_user t4 on t1.f_userid = t4.f_id
+        <where>
+            <if test="user.positionNo.no == '02004'">
+                and t3.f_id = #{user.id}
+            </if>
+            <if test="user.positionNo.no == '02005'">
+                and t3.f_id = #{user.id}
+            </if>
+            and t3.f_positionno in (SELECT f_no FROM t_position CONNECT BY PRIOR f_no=f_mgr START WITH f_no=#{user.positionNo.no})
+            <if test="orderParam.orderNo != null and orderParam.orderNo != ''">
+                and t1.f_orderno like '%'||#{orderParam.orderNo}||'%'
+            </if>
+            <if test="orderParam.cusname !=null and orderParam.cusname != ''">
+                and t2.f_name like '%'||#{orderParam.cusname}||'%'
+            </if>
+            <if test="orderParam.beginCreateTime !=null">
+                and t1.f_createtime > #{orderParam.beginCreateTime}
+            </if>
+            <if test="orderParam.endCreateTime !=null">
+                <![CDATA[
+                    and t1.f_createtime <= #{orderParam.endCreateTime}
+                ]]>
+            </if>
+            <if test="orderParam.startMoney != null and orderParam.startMoney != ''">
+                and t1.f_money > #{orderParam.startMoney}
+            </if>
+            <if test="orderParam.endMoney != null and orderParam.endMoney != ''">
+                <![CDATA[
+                    and t1.f_money <= #{orderParam.endMoney}
+                ]]>
+            </if>
+            <if test="orderParam.status != null and orderParam.status != ''">
+                and t1.f_status = #{orderParam.status}
+            </if>
+        </where>
+        )
+    </select>
+
+    <!--查询单个-->
+    <select id="findByNo" resultMap="OrderMap">
+        select t1.f_orderno f_orderno,t2.f_id f_cusid,t2.f_name f_cusname,t2.f_tel,
+        t1.f_createtime,t1.f_money,t3.f_id f_createid,t3.f_name f_createname,t1.f_status f_status,
+        t4.f_id f_chackid,t4.f_name f_checkname,t1.f_checktime,t1.f_opinion
+        from t_order t1 left join t_customer t2 on t1.f_custormer = t2.f_id
+        left join t_user t3 on t1.f_createid = t3.f_id
+        left join t_user t4 on t1.f_userid = t4.f_id where t1.f_orderno = #{orderNo}
+    </select>
+
+    <!--添加-->
+    <select id="createOrderNo" resultType="String">
+        select 'DJ'||to_char(sysdate,'yyyyMMdd')
+        ||lpad(seq_order.nextval,4,'0') from dual
+    </select>
+
+    <insert id="addOrder">
+        insert into t_order
+        (f_orderNo,f_status,f_createTime,f_createid,f_money,f_userid,f_checktime,f_custormer,f_opinion)
+        values(#{order.orderNo},#{order.status},#{order.createTime},#{order.createUser.id},#{order.money},
+        null,null,#{order.customer.id},null)
+    </insert>
+
+    <!--修改-->
+    <update id="updateOrder">
+        update t_order set f_custormer = #{order.customer.id},f_money = #{order.money} where f_orderNo = #{order.orderNo}
+    </update>
+
+    <!--删除-->
+    <delete id="delOrder">
+        delete from t_order where f_orderNo = #{orderNo}
+    </delete>
+
+    <!--提交审核-->
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_no"/>
+        <result property="name" column="f_name"/>
+    </resultMap>
+        <!--查询市场部审核职位-->
+    <select id="findPosition" resultMap="positionMap">
+        select * from t_position where f_deptno = '02' and f_mgr in('02001','01001')
+    </select>
+        <!--根据职位查询在职用户-->
+    <select id="findCheckUser" resultMap="userMap">
+        select t.f_id f_checkid,t.f_name f_checkname from t_user t where t.f_positionno = #{positionno} and t.f_status = '1'
+    </select>
+    <update id="grantCheck">
+        update t_order set f_status = '1',f_userid = #{user.id},f_checktime = null,f_opinion = null
+        where f_orderNo = #{orderNo}
+    </update>
+
+    <!--审核-->
+    <update id="examineOrder">
+        update t_order set f_status = #{status},f_userid = #{userId.id},f_checktime = systimestamp,
+        f_opinion = #{opinion} where f_orderNo = #{orderNo}
+    </update>
+
+</mapper>

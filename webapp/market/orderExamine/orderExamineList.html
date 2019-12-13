@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>客户管理</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+  <link href="../../css/pagination.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="../../js/common.js"></script>
+  <script type="text/javascript" src="../../js/data.js"></script>
+  <script type="text/javascript" src="../../js/pagination.min.js"></script>
+  <script type="text/javascript" src="orderExamineList.js"></script>
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>营销管理</li>
+    <li>订购单审核管理</li>
+    <li>基本内容</li>
+  </ul>
+</div>
+<div class="rightinfo">
+  <form id="orderExamineForm">
+    <ul class="tools">
+      <li> 订单编号:
+        <input type="text" name="orderNo"/>
+      </li>
+      <li> 客户姓名:
+        <input type="text" name="cusname"/>
+      </li>
+      <li> 订购时间:
+        <input type="text" name="beginCreateTime" onclick="SelectDate(this,'yyyy-MM-dd')"/>-<input type="text" name="endCreateTime" onclick="SelectDate(this,'yyyy-MM-dd')"/>
+      </li>
+      <li> 金额:
+        <input type="text" class="stinput" name="startMoney"/>-<input type="text" class="stinput" name="endMoney"/>
+        <input type="hidden" name="status" value="1"/>
+      </li>
+      <li class="subBut" onclick="orderExaminePage(1);"><img src="../../images/t06.png" />查询</li>
+    </ul>
+    <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>订单编号</th>
+          <th>客户姓名</th>
+          <th>联系电话</th>
+          <th>订购时间</th>
+          <th>金额</th>
+          <th>操作人</th>
+          <th>审核状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+    <div id="pagination_5" align="right"></div>
+    <input name="pageNo" type="hidden" />
+  </form>
+</div>
+<script type="text/javascript">
+	$('.tablelist tbody tr:odd').addClass('odd');
+</script>
+</body>
+</html>

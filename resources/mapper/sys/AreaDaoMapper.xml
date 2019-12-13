@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.AreaDao">
+
+    <resultMap id="cityMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="city_Id" />
+        <result property="name" column="city_Name" />
+        <association property="proId" column="pro_Id" resultMap="provinceMap" />
+    </resultMap>
+
+    <resultMap id="provinceMap" type="com.ztkj.sys.model.Province">
+        <id property="proId" column="pro_Id" />
+        <result property="name" column="pro_name" />
+    </resultMap>
+
+    <!--模糊+分页-->
+    <select id="findByPage" resultMap="cityMap">
+        SELECT *
+        FROM (SELECT C.*, P.PRO_NAME, ROWNUM RN
+        FROM T_CITY C, T_PROVINCE P
+        <where>
+            and C.PRO_ID = P.PRO_ID
+            <![CDATA[AND ROWNUM <= #{endIndex} ]]>
+            <if test="city.name != null and city.name != ''">
+                AND CITY_NAME LIKE '%'||#{city.name}||'%'
+            </if>
+            <if test="city.proId != null and city.proId.name != ''">
+                AND PRO_NAME LIKE '%'||#{city.proId.name}||'%'
+            </if>
+        </where>
+        ) WHERE RN >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*)
+        FROM T_CITY C, T_PROVINCE P
+        <where>
+            and C.PRO_ID = P.PRO_ID
+            <if test="city.name != null and city.name != ''">
+                AND CITY_NAME LIKE '%'||#{city.name}||'%'
+            </if>
+            <if test="city.proId != null and city.proId.name != ''">
+                AND PRO_NAME LIKE '%'||#{city.proId.name}||'%'
+            </if>
+        </where>
+    </select>
+
+</mapper>

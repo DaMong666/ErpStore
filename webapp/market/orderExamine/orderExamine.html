@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../../js/jquery.js"></script>
+  <script type="text/javascript" src="../../js/common.js"></script>
+  <script type="text/javascript" src="orderExamine.js"></script>
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>营销管理</li>
+    <li>订购单审核管理</li>
+    <li>审核</li>
+  </ul>
+</div>
+<div class="formbody">
+  <div class="formtitle"><span>订购单审核</span></div>
+  <ul class="forminfo">
+    <li>
+      <label>订单编号</label>
+      <cite id="orderNo"></cite>
+    </li>
+    <li>
+      <label>客户姓名</label>
+      <cite id="cusname"></cite>
+    </li>
+    <li>
+      <label>联系电话</label>
+      <cite id="tel"></cite>
+    </li>
+    <li>
+      <label>订购时间</label>
+      <cite id="createTime"></cite>
+    </li>
+    <li>
+      <label>总金额</label>
+      <cite id="money"></cite>
+    </li>
+    <li>
+      <label>操作人</label>
+      <cite id="createUser"></cite>
+    </li>
+  </ul>
+  <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>品牌</th>
+          <th>类型</th>
+          <th>型号</th>
+          <th>数量</th>
+          <th>单位</th>
+          <th>单价</th>
+          <th>金额</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+  </table>
+  <form id="examineOrder">
+    <ul class="forminfo">
+      <li>
+        <label>审核意见</label>
+        <textarea class="textinput" name="opinion"></textarea>
+      </li>
+      <li>
+        <label>审核状态</label>
+        <select class="dfselect" name="status">
+            <option value="1">请选择</option>
+            <option value="2">通过</option>
+            <option value="3">不通过</option>
+        </select>
+      </li>
+      <li>
+        <label>&nbsp;</label>
+        <input type="button" class="btn" value="审核" onclick="orderExamine();"/>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="button" class="btn" value="返回" onclick="window.location.href='orderExamineList.html'"/>
+      </li>
+    </ul>
+  </form>
+<script type="text/javascript">
+	$('.tablelist tbody tr:odd').addClass('odd');
+</script>
+</div>
+</body>
+</html>

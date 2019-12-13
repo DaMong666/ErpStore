@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ztkj.purchase.dao.PurchaseDetailDao">
+    <resultMap id="purchaseDetailMap" type="com.ztkj.purchase.model.PurchaseDetail">
+        <id property="id" column="f_id" />
+        <result property="num" column="f_num" />
+        <result property="price" column="f_price" />
+        <result property="money" column="f_money" />
+        <association property="purchase" column="f_purchaseNo" resultMap="purchaseMap" />
+        <association property="goods" column="f_goodsId" resultMap="goodsMap" />
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap" />
+    </resultMap>
+    <!--采购单-->
+    <resultMap id="purchaseMap" type="com.ztkj.purchase.model.Purchase">
+        <id property="purchaseNo" column="f_purchaseNo" />
+    </resultMap>
+    <!--品牌 类型 型号-->
+    <resultMap id="goodsMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_goodsId" />
+        <result property="model" column="f_model" />
+        <result property="unit" column="f_unit" />
+        <association property="goodsType" column="f_goodsId" resultMap="goodsTypeMap" />
+    </resultMap>
+    <!--商品类型-->
+    <resultMap id="goodsTypeMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_gTypeId" />
+        <result property="name" column="f_gTypename" />
+        <result property="status" column="f_status" />
+        <association property="brand" column="f_brandId" resultMap="brandMap" />
+    </resultMap>
+    <!--品牌-->
+    <resultMap id="brandMap" type="com.ztkj.purchase.model.Brand">
+        <id property="id" column="f_brandId" />
+        <result property="name" column="f_brandName" />
+        <result property="status" column="f_status" />
+    </resultMap>
+
+    <!--根据商品类型的id获取商品型号-->
+    <resultMap id="goodsGoodsTypeMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_id" />
+        <result property="model" column="f_model" />
+        <result property="status" column="f_status" />
+    </resultMap>
+    <!--厂商-->
+    <resultMap id="vendorMap" type="com.ztkj.purchase.model.Vendor">
+        <id property="id" column="f_vendorId" />
+        <result property="name" column="f_vendorName" />
+    </resultMap>
+    <!--根据商品类型id查询所有的商品型号-->
+    <select id="findAllGoodsByGoodsTypeId" resultMap="goodsGoodsTypeMap">
+        select * from t_goods where f_gTypeId = #{goodsTypeId}
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+        INSERT INTO t_purchaseDetail(f_id,f_purchaseNo,f_goodsId,f_vendorId,
+        f_num,f_price,f_money) values(seq_purchaseDetail.nextval,#{purchaseDetail.purchase.purchaseNo},
+        #{purchaseDetail.goods.id},#{purchaseDetail.vendor.id},#{purchaseDetail.num},
+        #{purchaseDetail.price},#{purchaseDetail.money})
+    </insert>
+    <!--根据采购单编号查询采购明细表信息-->
+    <select id="getPurchaseDetailByPurchaseNo" resultMap="purchaseDetailMap">
+        select c.*,ven.f_name as f_vendorName from
+        (select b.*,br.f_name as f_brandName from
+        (select a.*,gt.f_brandid,gt.f_name as f_gTypename from
+        (select pcd.*,g.f_gtypeid,g.f_model,g.f_unit
+        from t_purchasedetail pcd
+        left join t_goods g
+        on pcd.f_goodsid = g.f_id) a left join t_goodstype gt on a.f_gtypeId = gt.f_id) b
+        left join t_brand br on b.f_brandId = br.f_id) c left join t_vendor ven
+        on c.f_vendorId = ven.f_id where f_purchaseNo = #{purchaseNo}
+    </select>
+    <!--根据采购单编号删除明细单-->
+    <delete id="deleteDetail">
+        delete from t_purchaseDetail where f_purchaseNo = #{purchaseNo}
+    </delete>
+    <select id="countDetail" resultType="int">
+        select count(*) from
+        (select b.*,br.f_name as f_brandName from
+        (select a.*,gt.f_brandid,gt.f_name as f_gTypename from
+        (select pcd.*,g.f_gtypeid,g.f_model,g.f_unit
+        from t_purchasedetail pcd
+        left join t_goods g
+        on pcd.f_goodsid = g.f_id) a left join t_goodstype gt on a.f_gtypeId = gt.f_id) b
+        left join t_brand br on b.f_brandId = br.f_id) c left join t_vendor ven
+        on c.f_vendorId = ven.f_id where f_purchaseNo =#{purchaseNo}
+    </select>
+
+
+
+</mapper>

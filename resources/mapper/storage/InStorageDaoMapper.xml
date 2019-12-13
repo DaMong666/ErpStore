@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ztkj.storage.dao.InStorageDao">
+    <!--结果集映射resultMap-->
+    <resultMap id="inStorageMap" type="com.ztkj.storage.model.InStorage">
+        <id property="id" column="f_id"></id>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <association property="purchase" column="f_purchaseno" resultMap="purchaseMap"/>
+        <association property="storage" column="f_storageId" resultMap="storageMap"/>
+    </resultMap>
+    <!--采购单映射-->
+    <resultMap id="purchaseMap" type="com.ztkj.purchase.model.Purchase">
+        <id property="purchaseNo" column="f_purchaseno"></id>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <result property="money" column="f_money"/>
+        <result property="opinion" column="f_opinion"/>
+        <result property="checkTime" column="f_checkTime"/>
+        <association property="createUser" column="f_createId" resultMap="createuserMap"/>
+        <association property="checkUser" column="f_checkId" resultMap="checkuserMap"/>
+    </resultMap>
+    <!--仓库映射-->
+    <resultMap id="storageMap" type="com.ztkj.storage.model.Storage">
+        <id property="id" column="f_storageId"></id>
+        <result property="name" column="storageName"/>
+        <result property="status" column="f_status"/>
+        <association property="principalPerson" column="f_userId" resultMap="userMap"/>
+    </resultMap>
+    <!--仓库出库人映射-->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userId"></id>
+        <result property="name" column="stoManName"/>
+    </resultMap>
+    <!--操作人-->
+    <resultMap id="createuserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_createId"></id>
+        <result property="name" column="createPerson"/>
+    </resultMap>
+    <!--审核人-->
+    <resultMap id="checkuserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_checkId"></id>
+        <result property="name" column="checkPerson"/>
+    </resultMap>
+    <!--采购明细表-->
+    <resultMap id="purchaseDetailMap" type="com.ztkj.purchase.model.PurchaseDetail">
+        <id property="id" column="f_id"></id>
+        <result property="num" column="f_num"/>
+        <result property="price" column="f_price"/>
+        <result property="money" column="f_money"/>
+        <association property="goods" column="f_goodsId" resultMap="goodsMap"/>
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap"/>
+    </resultMap>
+    <!--商品表映射-->
+    <resultMap id="goodsMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_goodsId"></id>
+        <result property="model" column="goodName"/>
+        <result property="unit" column="goodUnit"/>
+        <association property="goodsType" column="f_gTypeId" resultMap="typeMap"/>
+    </resultMap>
+    <!--类型表映射-->
+    <resultMap id="typeMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_gTypeId"></id>
+        <result property="name" column="typeName"/>
+        <association property="brand" column="f_brandId" resultMap="brandMap"/>
+    </resultMap>
+    <!--商标表映射-->
+    <resultMap id="brandMap" type="com.ztkj.purchase.model.Brand">
+        <id property="id" column="f_brandId"></id>
+        <result property="name" column="brandName"/>
+    </resultMap>
+    <!--厂商映射-->
+    <resultMap id="vendorMap" type="com.ztkj.purchase.model.Vendor">
+        <id property="id" column="f_vendorId"></id>
+        <result property="name" column="vendorName"/>
+    </resultMap>
+    <resultMap id="purchaseNoMap" type="com.ztkj.purchase.model.Purchase">
+        <id property="purchaseNo" column="f_purchaseNo"></id>
+    </resultMap>
+    <resultMap id="inventoryMap" type="com.ztkj.storage.model.Inventory">
+        <id property="id" column="f_id"></id>
+        <result property="num" column="f_num"/>
+        <association property="goods" column="f_goodId" resultMap="goodsMap"/>
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap"/>
+    </resultMap>
+    <!--分页+模糊查询-->
+    <select id="findAllByPage"  resultMap="inStorageMap">
+        select * from (
+        select b.*,u.f_name as stoManName,rownum rn from
+        (
+        select a.*,s.f_name as storageName from (
+        select ins.*,p.f_money
+        from t_instorage ins
+        left join t_purchase p
+        on ins.f_purchaseno = p.f_purchaseNo) a
+        left join t_storage s
+        on a.f_storageId = s.f_id ) b left join t_user u on b.f_userId = u.f_id
+        where <![CDATA[rownum <= #{endIndex}]]>
+        <if test="inStorageParam.storageName != null and inStorageParam.storageName != ''">
+            and b.storageName like '%'||#{inStorageParam.storageName}||'%'
+        </if>
+        <if test="inStorageParam.purchaseNo != null and inStorageParam.purchaseNo != ''">
+            and b.f_purchaseNo like '%'||#{inStorageParam.purchaseNo}||'%'
+        </if>
+        <if test="inStorageParam.status != null and inStorageParam.status != 0">
+            and b.f_status = #{inStorageParam.status}
+        </if>
+        <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+            and b.f_userId = #{principalId}
+        </if>
+        order by b.f_Id desc
+        ) where rn >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        select count(f_id) from
+        (select b.*,u.f_name as stoManName from
+        (
+        select a.*,s.f_name as storageName from (
+        select ins.*,p.f_money
+        from t_instorage ins
+        left join t_purchase p
+        on ins.f_purchaseno = p.f_purchaseNo) a
+        left join t_storage s
+        on a.f_storageId = s.f_id ) b left join t_user u on b.f_userId = u.f_id)
+        <where>
+            <if test="inStorageParam.storageName != null and inStorageParam.storageName != ''">
+                and storageName like '%'||#{inStorageParam.storageName}||'%'
+            </if>
+            <if test="inStorageParam.purchaseNo != null and inStorageParam.purchaseNo != ''">
+                and f_purchaseNo like '%'||#{inStorageParam.purchaseNo}||'%'
+            </if>
+            <if test="inStorageParam.status != null and inStorageParam.status != 0">
+                and f_status = #{inStorageParam.status}
+            </if>
+            <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+                and f_userId = #{principalId}
+            </if>
+        </where>
+    </select>
+    <!--根据入库表采购单编号查询采购表信息-->
+    <select id="findPurchaseById" resultMap="purchaseMap">
+        select pc.*,u.f_name as createPerson,u1.f_name as checkPerson from t_purchase pc left join t_user u on pc.f_createid = u.f_id
+        left join t_user u1 on pc.f_checkid = u1.f_id where f_purchaseNo = #{purchaseNo}
+    </select>
+    <!--根据入库表购单编号查询入库表信息-->
+    <select id="findInStorageById" resultMap="inStorageMap">
+        select a.*,u.f_name as stoManName from
+        (select ins.*,s.f_name as storageName,s.f_principalid from t_instorage ins
+        left join t_storage s on ins.f_storageid = s.f_id) a left join t_user u on a.f_principalId = u.f_id where f_purchaseNo = #{purchaseNo}
+    </select>
+    <!--根据入库表购单编号查询采购明细表信息-->
+    <select id="findPurchaseDetailById" resultMap="purchaseDetailMap">
+        select c.*,ven.f_name as vendorName from
+        (select b.*,br.f_name as brandName from
+        (select a.*,gt.f_brandid,gt.f_name as typeName from
+        (select pcd.*,g.f_gtypeid,g.f_model as goodName,g.f_unit as goodUnit
+        from t_purchasedetail pcd
+        left join t_goods g
+        on pcd.f_goodsid = g.f_id) a left join t_goodstype gt on a.f_gtypeId = gt.f_id) b
+        left join t_brand br on b.f_brandId = br.f_id) c left join t_vendor ven
+        on c.f_vendorId = ven.f_id where f_purchaseNo = #{purchaseNo}
+    </select>
+    <!--实时查询采购单号-->
+    <select id="selectPurchaseNo" resultType="string">
+        <!--<if test="purchaseNo == null">
+            select f_purchaseNo from t_purchase where f_status = '2'
+        </if>-->
+        <if test="purchaseNo != null">
+            select f_purchaseNo from t_purchase where f_status = '2' and f_purchaseNo like '%'||#{purchaseNo}||'%'
+        </if>
+    </select>
+    <!--查询所有通过审核的采购单-->
+    <select id="findAllPurchase2" resultMap="purchaseMap">
+        select f_purchaseNo from t_purchase where f_status = '2'
+    </select>
+    <!--查询出所有状态可用得仓库-->
+    <select id="findAllStorage" resultMap="storageMap">
+        select * from (select s.f_id as f_storageId,s.f_name as storageName,
+        s.f_principalid as f_userId,u.f_name as stoManName,s.f_status
+        from t_storage s
+        left join t_user u
+        on s.f_principalid = u.f_id) where f_status = '1' and f_userId = #{principalId}
+    </select>
+    <!--添加入库-->
+    <insert id="addInstorage">
+        insert into t_instorage(f_id,f_purchaseno,f_storageid,f_status,f_createtime,f_userid)
+        values(seq_t_instorage.nextval,#{inStorage.purchase.purchaseNo},#{inStorage.storage.id},
+        #{inStorage.status},#{inStorage.createTime,jdbcType=TIMESTAMP},#{inStorage.storage.principalPerson.id})
+    </insert>
+    <!--修改入库状态-->
+    <update id="updateinsoStatus">
+        <if test="inStorage.status == 1">
+            update t_instorage set f_status = '2' where f_purchaseNo = #{inStorage.purchase.purchaseNo}
+        </if>
+        <if test="inStorage.status == 2">
+            update t_instorage set f_status = '1' where f_purchaseNo = #{inStorage.purchase.purchaseNo}
+        </if>
+    </update>
+    <!--根据采购单找到入库仓库  再找到该仓库库存-->
+    <select id="findInventoryById" resultMap="inventoryMap">
+        select * from t_inventory where f_storageId =
+        (select f_storageId from t_instorage where f_purchaseNo = #{purchaseNo})
+    </select>
+    <!--添加一条记录到库存中-->
+    <insert id="addInventory">
+        insert into t_inventory(f_id,f_storageid,f_goodsid,f_vendorid,f_num)
+        values(seq_t_inventory.nextval,#{inventory.storage.id}
+        ,#{inventory.goods.id},#{inventory.vendor.id},#{inventory.num})
+    </insert>
+    <!--库存表存在记录，改数量-->
+    <update id="updateaddInventoryNum">
+        update t_inventory set f_num=f_num+#{inventory.num} where
+            f_storageId  = #{inventory.storage.id}
+            and f_goodsId =#{inventory.goods.id}
+            and f_vendorId =#{inventory.vendor.id}
+    </update>
+    <!--取消入库，减少库存数量-->
+    <update id="updatesubInventoryNum">
+        update t_inventory set f_num=f_num-#{inventory.num} where
+        f_storageId  = #{inventory.storage.id}
+        and f_goodsId =#{inventory.goods.id}
+        and f_vendorId =#{inventory.vendor.id}
+    </update>
+    <!--查询库存中是否有记录-->
+    <select id="count" resultType="int">
+        select count(*) from t_inventory  where
+        f_storageId  = #{inventory.storage.id}
+        and f_goodsId =#{inventory.goods.id}
+        and f_vendorId =#{inventory.vendor.id}
+    </select>
+    <!--根据仓库id和采购单号查询入库信息-->
+    <select id="findInStorageBypurchaseNoAndStorageId" resultMap="inStorageMap">
+        select a.*,u.f_name as stoManName from
+        (select ins.*,s.f_name as storageName,s.f_principalid from t_instorage ins
+        left join t_storage s on ins.f_storageid = s.f_id) a left join t_user u on a.f_principalId = u.f_id where f_purchaseNo = #{purchaseNo} and f_storageId = #{storageId}
+    </select>
+</mapper>

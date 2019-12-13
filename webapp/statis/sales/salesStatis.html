@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+  <link href="../../css/style.css" rel="stylesheet" type="text/css"/>
+  <link href="../../css/pagination.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript" src="../../js/common.js"></script>
+  <script type="text/javascript" src="../../js/data.js"></script>
+  <script type="text/javascript" src="../../js/pagination.min.js"></script>
+  <script type="text/javascript" src="salesStatis.js"></script>
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li>数据统计</li>
+    <li>客户销量统计</li>
+    <li>基本内容</li>
+  </ul>
+</div>
+<div class="rightinfo">
+  <form id="salesForm">
+    <ul class="tools">
+      <li> 所属区域：
+        <select name="province" id="provinceId" onchange="loadCity();">
+        </select>
+        <select name="city" id="cityId">
+        </select>
+      </li>
+      <li> 客户姓名:
+        <input type="text" name="cusname"/>
+      </li>
+      <li> 时间:
+        <input type="text" name="beginTime" onclick="SelectDate(this,'yyyy-MM-dd')"/>-<input type="text" name="endTime" onclick="SelectDate(this,'yyyy-MM-dd')"/>
+      </li>
+
+      <li class="subBut" onclick="salesByPage(1);"><img src="../../images/t06.png" />查询</li>
+    </ul>
+    <table class="tablelist">
+      <thead>
+        <tr>
+          <th>序号</th>
+          <th>客户姓名</th>
+          <th>所属区域</th>
+          <th>订购单数量</th>
+          <th>金额</th>
+          <th>订购单明细</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+    <div id="pagination_5" align="right"></div>
+    <input name="pageNo" type="hidden" />
+  </form>
+</div>
+<script type="text/javascript">
+	$('.tablelist tbody tr:odd').addClass('odd');
+</script>
+</body>
+</html>

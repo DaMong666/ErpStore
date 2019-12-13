@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.PositionDao">
+
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_no" />
+        <result property="name" column="f_name" />
+        <result property="status" column="f_status" />
+        <association property="deptNo" column="f_deptNo" resultMap="deptMap" />
+        <association property="mgr" column="f_mgr" resultMap="mgrMap"/>
+    </resultMap>
+
+    <resultMap id="deptMap" type="com.ztkj.sys.model.Dept">
+        <id property="no" column="f_deptNo" />
+        <result property="name" column="f_deptName" />
+    </resultMap>
+
+
+    <resultMap id="mgrMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_mgr" />
+        <result property="name" column="f_mgrName" />
+    </resultMap>
+
+    <!--模糊+分页-->
+    <select id="findByPage" resultMap="positionMap">
+        SELECT T1.*,
+        RN FROM (SELECT T.*, P.F_NAME F_MGRNAME, ROWNUM RN
+        FROM (SELECT P1.*, D.F_NAME F_DEPTNAME
+        FROM T_POSITION P1, T_DEPT D
+        WHERE P1.F_DEPTNO = D.F_NO) T
+        LEFT JOIN T_POSITION P ON T.F_MGR = P.F_NO
+        <where>
+            <![CDATA[and ROWNUM <= #{endIndex}]]>
+            <if test="position.name != null and position.name != ''">
+                and t.f_name LIKE '%'||#{position.name}||'%'
+            </if>
+            <if test="position.deptNo != null and position.deptNo.no != ''">
+                and t.f_deptNo = #{position.deptNo.no}
+            </if>
+        </where>
+        ORDER BY T.F_NO)T1 WHERE RN >=  #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT COUNT(t.f_no)
+        FROM (SELECT P1.*, D.F_NAME F_DEPTNAME
+        FROM T_POSITION P1, T_DEPT D
+        WHERE P1.F_DEPTNO = D.F_NO) T
+        LEFT JOIN T_POSITION P ON T.F_MGR = P.F_NO
+        <where>
+            <if test="position.name != null and position.name != ''">
+                and t.f_name LIKE '%'||#{position.name}||'%'
+            </if>
+            <if test="position.deptNo != null and position.deptNo.no != ''">
+                and t.f_deptNo = #{position.deptNo.no}
+            </if>
+        </where>
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+        INSERT INTO t_position(f_no,f_name,f_deptNo,f_mgr,f_status)
+        VALUES(#{position.no},#{position.name},#{position.deptNo.no},
+        <choose>
+            <when test="position.mgr != null and position.mgr.no != ''">
+                #{position.mgr.no}
+            </when>
+            <otherwise>
+                null
+            </otherwise>
+        </choose>
+        ,'1')
+    </insert>
+
+    <!--修改-->
+    <update id="update">
+        UPDATE t_position
+        <set>
+            <if test="position.name != null and position.name != ''">
+                f_name = #{position.name},
+            </if>
+            <choose>
+                <when test="position.deptNo != null and position.deptNo.no !=''"> f_deptNo = #{position.deptNo.no},</when>
+            </choose>
+            <choose>
+                <when test="position.mgr != null and position.mgr.no !=''"> f_mgr = #{position.mgr.no},</when>
+                <otherwise>null,</otherwise>
+            </choose>
+        </set>
+         WHERE f_no = #{position.no}
+    </update>
+
+    <!--注销-->
+    <update id="cancel">
+        UPDATE t_position SET f_status = '0' WHERE f_no = #{no}
+    </update>
+
+    <!--恢复-->
+    <update id="recover">
+        UPDATE t_position SET f_status = '1' WHERE f_no = #{no}
+    </update>
+
+    <!--获取职位编号-->
+    <select id="getNo" resultType="Integer">
+        SELECT MAX(f_no)+1 FROM t_position WHERE f_deptNo = #{deptNo}
+    </select>
+
+    <!--根据No查询部门-->
+    <select id="getByNo" resultMap="positionMap">
+        SELECT p1.*,d.f_name f_deptName,p2.f_name f_mgrName FROM t_position p1 LEFT JOIN t_dept d ON p1.f_deptNo = d.f_no
+        LEFT JOIN t_position p2 ON p1.f_mgr = p2.f_NO
+        WHERE p1.f_no = #{no}
+    </select>
+
+    <!--获取上级-->
+    <select id="findMgr" resultMap="mgrMap">
+        SELECT F_NO AS F_MGR, F_NAME AS F_MGRNAME
+        FROM T_POSITION
+        WHERE (F_DEPTNO =  #{deptNo}
+        OR f_deptNo = '01')
+        AND f_status = '1'
+    </select>
+
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.ModuleDao">
+
+    <resultMap id="moduleMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_id" />
+        <result property="name" column="f_name" />
+        <result property="url" column="f_url" />
+        <result property="status" column="f_status" />
+        <association property="parent" column="f_parentId" resultMap="parentMap" />
+    </resultMap>
+
+    <resultMap id="parentMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_parentId" />
+        <result property="name" column="f_parentName" />
+    </resultMap>
+
+    <resultMap id="childMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_id" />
+        <result property="name" column="f_name" />
+        <association property="parent" column="f_parentId" resultMap="parentMap" />
+    </resultMap>
+
+    <!--模糊+分页-->
+    <select id="findByPage" resultMap="moduleMap">
+        SELECT *
+        FROM (SELECT M1.*, M2.F_NAME F_PARENTNAME, ROWNUM RN
+        FROM T_MODULE M1
+        LEFT JOIN T_MODULE M2 ON M1.F_PARENTID = M2.F_ID
+        <![CDATA[WHERE ROWNUM <= #{endIndex}]]>
+        <if test="module.name != null and module.name != ''">
+            AND M1.F_NAME LIKE '%'||#{module.name}||'%'
+        </if>
+        ) WHERE RN >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT COUNT(m1.f_id)
+        FROM T_MODULE M1
+        LEFT JOIN T_MODULE M2 ON M1.F_PARENTID = M2.F_ID
+        <if test="module.name != null and module.name != ''">
+            WHERE  M1.F_NAME LIKE '%'||#{module.name}||'%'
+        </if>
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+        <selectKey keyProperty="module.id" resultType="int" order="BEFORE">
+            select seq_module.nextval from dual
+        </selectKey>
+        INSERT INTO t_module(f_id,f_name,f_parentId,f_url,f_status)
+        VALUES(#{module.id},#{module.name},
+        <choose>
+            <when test="module.parent != null and module.parent.id != 0">#{module.parent.id}</when>
+            <otherwise>null</otherwise>
+        </choose>
+        ,#{module.url},'1')
+    </insert>
+
+    <!--修改-->
+    <update id="update">
+        UPDATE t_module
+        <set>
+            <if test="module.name != null and module.name!= ''">
+                f_name = #{module.name},
+            </if>
+            <choose>
+                <when test="module.parent != null and module.parent.id != 0"> f_parentId =  #{module.parent.id},</when>
+                <otherwise>f_parentId = null,</otherwise>
+            </choose>
+            <if test="module.url != null and module.url != ''">
+                f_url = #{module.url},
+            </if>
+        </set>
+        WHERE f_id = #{module.id}
+    </update>
+
+    <!--禁用-->
+    <update id="cancel">
+        UPDATE t_module SET f_status = '0' WHERE f_id = #{id}
+    </update>
+
+    <!--启用-->
+    <update id="recover">
+        UPDATE t_module SET f_status = '1' WHERE f_id = #{id}
+    </update>
+
+    <!--根据id查询-->
+    <select id="getById" resultMap="moduleMap">
+        SELECT M1.*, M2.F_NAME F_PARENTNAME
+        FROM T_MODULE M1
+        LEFT JOIN T_MODULE M2 ON M1.F_PARENTID = M2.F_ID
+        WHERE M1.F_ID = #{id}
+    </select>
+
+    <!--获取父模块-->
+    <select id="findParent" resultMap="parentMap">
+        SELECT f_id AS f_parentId,f_name AS f_parentName FROM t_module where f_parentId is null
+    </select>
+
+    <!--获取子模块-->
+    <select id="findChild" resultMap="childMap">
+        SELECT m1.f_id,m1.f_name,m1.f_parentId,m2.f_name AS f_parentName FROM t_module m1,t_module m2
+        WHERE m1.f_parentId = m2.f_id AND m1.f_parentId IS NOT NULL
+    </select>
+
+</mapper>

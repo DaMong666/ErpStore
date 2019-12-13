@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.DeptDao">
+
+    <resultMap id="deptMap" type="com.ztkj.sys.model.Dept">
+        <id property="no" column="f_no" />
+        <result property="name" column="f_name" />
+        <result property="status" column="f_status" />
+    </resultMap>
+
+    <!--模糊+分页-->
+    <select id="findByPage" resultMap="deptMap">
+        SELECT *
+        FROM (SELECT T.*, ROWNUM RN
+        FROM T_DEPT T
+        <where>
+            <![CDATA[AND ROWNUM <= #{endIndex} ]]>
+            <if test="dept.name != null and dept.name != ''">
+                AND F_NAME LIKE '%'|| #{dept.name} ||'%'
+            </if>
+        </where>
+        )  WHERE RN >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT count(f_no) from t_dept
+        <where>
+            <if test="dept.name != null and dept.name != ''">
+                AND F_NAME LIKE '%'|| #{dept.name} ||'%'
+            </if>
+        </where>
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+        INSERT INTO t_dept(f_no,f_name,f_status) VALUES (#{dept.no},#{dept.name},'1')
+    </insert>
+
+    <!--修改-->
+    <update id="update">
+        UPDATE t_dept SET f_name = #{dept.name} WHERE f_no = #{dept.no}
+    </update>
+
+    <!--注销-->
+    <update id="cancel">
+        update t_dept set f_status = '0' where f_no = #{no}
+    </update>
+
+    <!--恢复-->
+    <update id="recover">
+        update t_dept set f_status = '1' where f_no = #{no}
+    </update>
+
+    <!--获取部门编号-->
+    <select id="getNo" resultType="int">
+        SELECT max(f_no)+1 FROM t_dept
+    </select>
+
+    <!--根据No查询部门-->
+    <select id="getByNo" resultMap="deptMap">
+        select * from t_dept where f_no = #{no}
+    </select>
+
+</mapper>

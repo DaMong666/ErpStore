@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ztkj.storage.dao.InventoryDao">
+    <!--结果集映射resultMap-->
+    <resultMap id="inventoryMap" type="com.ztkj.storage.model.Inventory">
+        <id property="id" column="f_Id"/><!--主键-->
+        <result property="num" column="f_num"/>
+        <!--遇见对方是一，就写association-->
+        <association property="storage" column="f_storageId" resultMap="storageMap"/>
+        <association property="goods" column="f_goodsId" resultMap="goodsMap"/>
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap"/>
+    </resultMap>
+    <!--仓库映射类-->
+    <resultMap id="storageMap" type="com.ztkj.storage.model.Storage">
+        <id property="id" column="f_storageId"></id>
+        <result property="name" column="storageName"/>
+        <association property="principalPerson" column="f_principalid" resultMap="userMap"/>
+    </resultMap>
+    <!--仓库出库人映射-->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_principalid"></id>
+    </resultMap>
+    <!--商品映射类-->
+    <resultMap id="goodsMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_goodsId"></id>
+        <result property="model" column="goodName"/>
+        <result property="unit" column="unit"/>
+        <association property="goodsType" column="f_gTypeId" resultMap="typeMap"/>
+    </resultMap>
+    <!--商品类型-->
+    <resultMap id="typeMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_gTypeId"></id>
+        <result property="name" column="goodtypeName"/>
+        <association property="brand" column="f_brandId" resultMap="brandMap"/>
+    </resultMap>
+    <!--商品品牌-->
+    <resultMap id="brandMap" type="com.ztkj.purchase.model.Brand">
+        <id property="id" column="f_brandId"></id>
+        <result property="name" column="brandName"/>
+    </resultMap>
+    <!--厂商映射类-->
+    <resultMap id="vendorMap" type="com.ztkj.purchase.model.Vendor">
+        <id property="id" column="f_vendorId"></id>
+        <result property="name" column="vendorName"/>
+    </resultMap>
+    <!--分页+模糊查询-->
+    <select id="findAllByPage"  resultMap="inventoryMap">
+        select * from (
+        select e.*,rownum rn from (
+        select d.*,br.f_name as brandName from
+        (select c.*,gdtp.f_brandid,gdtp.f_name as goodTypeName from
+        (
+        select b.*,g.f_unit as unit,g.f_model as goodName,g.f_gtypeId from
+        (
+        select a.*,v.f_name as vendorName from
+        (select i.*,s.f_name as storageName,s.f_principalid from t_inventory i left join t_storage s on i.f_storageid = s.f_id) a left join
+        t_vendor v on a.f_vendorId = v.f_id) b left join t_goods g on b.f_goodsId = g.f_id) c  left join t_goodstype  gdtp
+        on c.f_gtypeId = gdtp.f_id) d left join t_brand br on d.f_brandId = br.f_id) e
+        where <![CDATA[rownum <= #{endIndex}]]>
+        <if test="inventoryParam.storageName != null and inventoryParam.storageName != ''">
+            and storageName like '%'||#{inventoryParam.storageName}||'%'
+        </if>
+        <if test="inventoryParam.brandName != null and inventoryParam.brandName != ''">
+            and brandName like '%'||#{inventoryParam.brandName}||'%'
+        </if>
+        <if test="inventoryParam.goodType != null and inventoryParam.goodType != ''">
+            and goodtypeName like '%'||#{inventoryParam.goodType}||'%'
+        </if>
+        <if test="inventoryParam.goodName != null and inventoryParam.goodName != ''">
+            and goodName like '%'||#{inventoryParam.goodName}||'%'
+        </if>
+        <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+            and f_principalId = #{principalId}
+        </if>
+        order by f_Id desc
+        ) where rn >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        select count(f_id) from
+        (select * from (
+        select d.*,br.f_name as brandName from
+        (select c.*,gdtp.f_brandid,gdtp.f_name as goodTypeName from
+        (
+        select b.*,g.f_unit as unit,g.f_model as goodName,g.f_gtypeId from
+        (
+        select a.*,v.f_name as vendorName from
+        (select i.*,s.f_name as storageName,s.f_principalid from t_inventory i left join t_storage s on i.f_storageid = s.f_id) a left join
+        t_vendor v on a.f_vendorId = v.f_id) b left join t_goods g on b.f_goodsId = g.f_id) c  left join t_goodstype  gdtp
+        on c.f_gtypeId = gdtp.f_id) d left join t_brand br on d.f_brandId = br.f_id))
+        <where>
+            <if test="inventoryParam.storageName != null and inventoryParam.storageName != ''">
+                and storageName like '%'||#{inventoryParam.storageName}||'%'
+            </if>
+            <if test="inventoryParam.brandName != null and inventoryParam.brandName != ''">
+                and brandName like '%'||#{inventoryParam.brandName}||'%'
+            </if>
+            <if test="inventoryParam.goodType != null and inventoryParam.goodType != ''">
+                and goodtypeName like '%'||#{inventoryParam.goodType}||'%'
+            </if>
+            <if test="inventoryParam.goodName != null and inventoryParam.goodName != ''">
+                and goodName like '%'||#{inventoryParam.goodName}||'%'
+            </if>
+            <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+                and f_principalId = #{principalId}
+            </if>
+        </where>
+    </select>
+
+</mapper>

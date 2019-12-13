@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ztkj.purchase.dao.VendorDao">
+    <resultMap id="vendorMap" type="com.ztkj.purchase.model.Vendor">
+        <id property="id" column="f_id" />
+        <result property="name" column="f_name" />
+        <result property="principal" column="f_principal" />
+        <result property="description" column="f_description" />
+        <result property="address" column="f_address" />
+        <result property="tel" column="f_tel" />
+        <result property="status" column="f_status" />
+        <result property="createTime" column="f_createTime" />
+        <association property="createUser" column="f_userId" resultMap="createUserMap" />
+        <association property="city" column="f_areaId" resultMap="cityMap" />
+    </resultMap>
+    <!--创建人-->
+    <resultMap id="createUserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userId" />
+        <result property="name" column="f_createName" />
+    </resultMap>
+    <!--所属区域  城市-->
+    <resultMap id="cityMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="f_areaId" />
+        <result property="name" column="city_Name" />
+        <association property="proId" column="pro_Id" resultMap="provinceMap" />
+    </resultMap>
+    <!--省份-->
+    <resultMap id="provinceMap" type="com.ztkj.sys.model.Province">
+        <id property="proId" column="pro_Id" />
+        <result property="name" column="pro_Name" />
+    </resultMap>
+    <!--根据省份id查询城市结果集映射-->
+    <resultMap id="cityProMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="city_id"/>
+        <result property="name" column="city_Name"/>
+        <association property="proId" column="pro_Id" resultMap="provinceMap"/>
+    </resultMap>
+
+    <!--分页查询-->
+    <select id="findByPage" resultMap="vendorMap">
+        SELECT * FROM
+        (SELECT t1.*,t2.f_name f_createName,t3.*,
+        ROWNUM rn FROM t_Vendor t1 LEFT JOIN t_User t2
+        ON t1.f_userid=t2.f_id  LEFT JOIN
+        (SELECT C.*,P.PRO_NAME
+        FROM T_CITY C
+        LEFT JOIN T_PROVINCE P ON C.PRO_ID = P.PRO_ID) t3
+        ON t3.city_id=t1.f_areaId
+        WHERE
+        <![CDATA[
+        ROWNUM<=#{endIndex}
+        ]]>
+        <if test="vendorParam.firmName!=null and vendorParam.firmName!=''">
+            AND t1.f_name LIKE '%' || #{vendorParam.firmName} || '%'
+        </if>
+        <if test="vendorParam.personName!=null and vendorParam.personName!=''">
+            AND t1.f_principal LIKE '%' || #{vendorParam.personName} || '%'
+        </if>
+        <if test="vendorParam.status!=null and vendorParam.status!=''">
+            AND t1.f_status=#{vendorParam.status}
+        </if>
+        <if test="vendorParam.provinceId != null and vendorParam.provinceId != ''">
+            and t3.pro_id = #{vendorParam.provinceId}
+        </if>
+        <if test="vendorParam.cityId != null and vendorParam.cityId != ''">
+            and t3.city_id = #{vendorParam.cityId}
+        </if>
+
+        order by t1.f_Id desc
+        ) WHERE rn>=#{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        SELECT count(t1.f_id) FROM t_Vendor t1 LEFT JOIN t_User t2
+        ON t1.f_userid=t2.f_id  LEFT JOIN
+        (SELECT C.*, P.PRO_NAME
+        FROM T_CITY C
+        LEFT JOIN T_PROVINCE P ON C.PRO_ID = P.PRO_ID) t3
+        ON t3.city_id=t1.f_areaId
+        <where>
+            <if test="vendorParam.firmName!=null and vendorParam.firmName!=''">
+                AND t1.f_name LIKE '%' || #{vendorParam.firmName} || '%'
+            </if>
+            <if test="vendorParam.personName!=null and vendorParam.personName!=''">
+                AND t1.f_principal LIKE '%' || #{vendorParam.personName} || '%'
+            </if>
+            <if test="vendorParam.status!=null and vendorParam.status!=''">
+                AND t1.f_status=#{vendorParam.status}
+            </if>
+            <if test="vendorParam.provinceId != null and vendorParam.provinceId != ''">
+                and t3.pro_id = #{vendorParam.provinceId}
+            </if>
+            <if test="vendorParam.cityId != null and vendorParam.cityId != ''">
+                and t3.city_id = #{vendorParam.cityId}
+            </if>
+        </where>
+    </select>
+    <!--查询全部-->
+    <select id="findAll" resultMap="vendorMap">
+        select * from t_vendor
+    </select>
+
+    <!--查找所有省份-->
+    <select id="findAllProvince" resultMap="provinceMap">
+        select * from t_province order by pro_id
+    </select>
+    <!--根据省份id查询所有的城市-->
+    <select id="findAllCityByProId" resultMap="cityProMap">
+        select * from t_city where pro_id = #{provinceId}
+    </select>
+
+
+    <!--添加-->
+    <insert id="add">
+      INSERT INTO t_vendor(f_id,f_name,f_principal,f_tel,f_areaId,f_status,f_createtime,
+      f_userId,f_description) values(seq_vendor.nextval,#{vendor.name},#{vendor.principal},
+      #{vendor.tel},#{vendor.city.cityId},#{vendor.status},
+      #{vendor.createTime},#{vendor.createUser.id},#{vendor.description})
+    </insert>
+    <!--根据id查询-->
+    <select id="findById" resultMap="vendorMap">
+        SELECT T1.*, T2.F_NAME F_CREATENAME,t3.*
+        FROM T_vendor T1
+        LEFT JOIN T_USER T2 ON T1.F_USERID = T2.F_ID
+        LEFT JOIN
+        (SELECT C.*, P.PRO_NAME
+        FROM T_CITY C
+        LEFT JOIN T_PROVINCE P ON C.PRO_ID = P.PRO_ID) t3
+        ON t3.city_id=t1.f_areaId
+        WHERE t1.F_ID = #{id}
+    </select>
+    <!--修改-->
+    <update id="update">
+        update t_vendor
+        <set>
+            <if test="vendor.name!=null and vendor.name!=''">
+                f_name=#{vendor.name},
+            </if>
+            <if test="vendor.principal!=null and vendor.principal!=''">
+                f_principal=#{vendor.principal},
+            </if>
+            <if test="vendor.tel!=null and vendor.tel!=''">
+                f_tel=#{vendor.tel},
+            </if>
+            <if test="vendor.description!=null and vendor.description!=''">
+                f_description=#{vendor.description},
+            </if>
+            <if test="vendor.address!=null and vendor.address!=''">
+                f_address=#{vendor.address},
+            </if>
+            <if test="vendor.status!=null and vendor.status != ''">
+                f_status=#{vendor.status},
+            </if>
+            <if test="vendor.city.cityId!=null and vendor.city.cityId != ''">
+                f_areaId=#{vendor.city.cityId},
+            </if>
+        </set>
+        where f_id=#{vendor.id}
+    </update>
+    <!--恢复-->
+    <update id="recover">
+        update t_vendor set f_status='1' where f_id=#{id}
+    </update>
+    <!--注销-->
+    <update id="cancel">
+        update t_vendor set f_status='0' where f_id=#{id}
+    </update>
+
+</mapper>

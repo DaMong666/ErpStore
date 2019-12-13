@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.AuthDao">
+
+    <resultMap id="authMap" type="com.ztkj.sys.model.Auth">
+        <association property="positionNo" column="f_positionNo" resultMap="positionMap" />
+        <association property="moduleId" column="f_moduleId" resultMap="moduleMap" />
+    </resultMap>
+
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_positionNo" />
+        <result property="name" column="f_positionName" />
+    </resultMap>
+
+
+    <resultMap id="moduleMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_moduleId" />
+        <result property="name" column="f_moduleName" />
+        <result property="url" column="f_url" />
+        <association property="parent" column="f_parentId" resultMap="parentModuleMap" />
+    </resultMap>
+
+    <resultMap id="parentModuleMap" type="com.ztkj.sys.model.Module">
+        <id property="id" column="f_parentId" />
+        <result property="name" column="f_parentName" />
+    </resultMap>
+
+
+    <!--根据职位No查询-->
+    <select id="findById" resultMap="authMap">
+        SELECT A.*,
+        P.F_NAME AS F_POSITIONNAME,
+        M.F_NAME AS F_MODULENAME,
+        M.F_PARENTID,
+        M.F_URL,
+        M2.F_NAME AS F_PARENTNAME
+        FROM T_AUTH A, T_POSITION P, T_MODULE M, T_MODULE M2
+        WHERE A.F_POSITIONNO = P.F_NO
+        AND A.F_MODULEID = M.F_ID
+        and m.f_status = '1'
+        AND M.F_PARENTID = M2.F_ID(+)
+        AND F_POSITIONNO = #{positionNo}
+    </select>
+
+    <!--删除-->
+    <delete id="delete">
+        delete from t_auth where f_positionNo = #{positionNo}
+    </delete>
+
+    <!--添加-->
+    <insert id="add">
+        insert into t_auth(f_positionNo,f_moduleId) values (#{positionNo},#{auth.moduleId.id})
+    </insert>
+
+</mapper>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.market.dao.OrderDetailDao">
+    <!--结果集映射-->
+    <resultMap id="OrderDetailMap" type="com.ztkj.market.model.OrderDetail">
+        <id property="id" column="f_id"/>
+        <result property="num" column="f_num"/>
+        <result property="price" column="f_price"/>
+        <result property="money" column="f_money"/>
+        <association property="order" column="f_orderNo" resultMap="orderMap"/>
+        <association property="goods" column="f_goodsId" resultMap="goodsMap"/>
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap"/>
+    </resultMap>
+
+    <!-- 订单 -->
+    <resultMap id="orderMap" type="com.ztkj.market.model.Order">
+        <id property="orderNo" column="f_orderNo"/>
+    </resultMap>
+
+    <!-- 商品型号 -->
+    <resultMap id="goodsMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_goodsId"/>
+        <result property="model" column="f_gmodel"/>
+        <result property="unit" column="f_unit"/>
+        <association property="goodsType" column="f_gtid" resultMap="goodsTypeMap"/>
+    </resultMap>
+
+    <!-- 商品类型 -->
+    <resultMap id="goodsTypeMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_gtid"/>
+        <result property="name" column="f_gtname"/>
+        <association property="brand" column="f_gbid" resultMap="brandMap"/>
+    </resultMap>
+
+    <!-- 品牌 -->
+    <resultMap id="brandMap" type="com.ztkj.purchase.model.Brand">
+        <id property="id" column="f_gbid"/>
+        <result property="name" column="f_gbname"/>
+    </resultMap>
+
+    <!-- 厂商 -->
+    <resultMap id="vendorMap" type="com.ztkj.purchase.model.Vendor">
+        <id property="id" column="f_vendorId"/>
+        <result property="name" column="f_vname"/>
+    </resultMap>
+
+    <!--查询订单所对应的商品-->
+    <select id="findByOrderNo" resultMap="OrderDetailMap">
+        select t1.*,t2.f_name f_vname,t3.f_model f_gmodel,t3.f_unit f_unit,
+        t4.f_id f_gtid,t4.f_name f_gtname,t5.f_id f_gbid,t5.f_name f_gbname
+        from t_orderdetail t1
+        left join t_vendor t2 on t1.f_vendorid = t2.f_id
+        left join t_goods t3 on t1.f_goodsid = t3.f_id
+        left join t_goodstype t4 on t3.f_gtypeid = t4.f_id
+        left join t_brand t5 on t4.f_brandid = t5.f_id where t1.f_orderNo = #{orderNo}
+    </select>
+
+    <!--删除订单对应的商品-->
+    <delete id="delByOrderNo">
+        delete from t_orderdetail where f_orderNo = #{orderNo}
+    </delete>
+
+    <!--添加订购单对应的订购单明细-->
+    <insert id="addOrderDetail">
+        <selectKey keyProperty="orderDetail.id" resultType="int" order="BEFORE">
+            select seq_orderDetail.Nextval from dual
+        </selectKey>
+        insert into t_orderdetail(f_id,f_orderno,f_goodsId,f_vendorid,f_num,f_price,f_money)
+        values(#{orderDetail.id},#{orderNo},
+        #{orderDetail.goods.id},#{orderDetail.vendor.id},#{orderDetail.num},
+        #{orderDetail.price},#{orderDetail.money})
+    </insert>
+
+</mapper>

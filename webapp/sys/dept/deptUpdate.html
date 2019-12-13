@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>部门管理</title>
+    <link href="../../css/style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="../../laydate/laydate.js"></script>
+    <script type="text/javascript" src="../../js/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script type="text/javascript" src="deptUpdate.js"></script>
+</head>
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li><a href="../users/userList.html">系统管理</a></li>
+    <li><a href="deptList.html">部门管理</a></li>
+    <li><a href="#">修改</a></li>
+  </ul>
+</div>
+<div class="formbody">
+  <div class="formtitle"><span>部门信息</span></div>
+  <form id="deptUpdateForm">
+  <ul class="forminfo">
+    <li>
+      <label>部门编号</label>
+      <input name="no" type="text" class="dfinput" readonly/>
+      <i>不可改动</i>
+    </li>
+    <li>
+      <label>部门名称</label>
+      <input name="name" type="text" class="dfinput" />
+      <i>必填，不能超过30个字符</i>
+    </li>
+
+    <li>
+      <label>&nbsp;</label>
+      <input name="" type="button" class="btn" onclick="deptUpdate()" value="确认保存"/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <input name="" type="button" class="btn" value="返回"  onclick="window.history.go(-1);"/>
+    </li>
+  </ul>
+  </form>
+</div>
+</body>
+</html>

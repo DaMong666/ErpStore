@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>无标题文档</title>
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <script language="JavaScript" src="js/jquery.js"></script>
+    <script src="js/common.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function(){
+            //导航切换
+
+            $.ajax({
+                type:"post",
+                url:basePath + "/sys/auth/qSeAuth",
+                success:function (data) {
+                    var authList = data;
+                    var html = "";
+                    for (var i = 0; i < authList.length; i++) {
+                        if (authList[i].moduleId.parent == null) {
+                            html += "<dd>" +
+                                        "<div class='title'>"+ authList[i].moduleId.name +"</div>" +
+                                        "<ul class='menuson'>";
+                            var parentId = authList[i].moduleId.id;
+                            for (var j = 0; j < authList.length; j++) {
+                                if (authList[j].moduleId.parent != null && parentId == authList[j].moduleId.parent.id) {
+                                    html += "<li><cite></cite><a href=\""+basePath+authList[j].moduleId.url+"\" target='rightFrame'>"+authList[j].moduleId.name+"</a><i></i></li>" ;
+                                }
+                            }
+                            html +=     "</ul>" +
+                                    "</dd> ";
+                        }
+                    }
+                    $(".leftmenu").html(html);
+                    $(".menuson .header").click(function(){
+                        var $parent = $(this).parent();
+                        $(".menuson>li.active").not($parent).removeClass("active open").find('.sub-menus').hide();
+                        $parent.addClass("active");
+                        if(!!$(this).next('.sub-menus').size()){
+                            if($parent.hasClass("open")){
+                                $parent.removeClass("open").find('.sub-menus').hide();
+                            }else{
+                                $parent.addClass("open").find('.sub-menus').show();
+                            }
+                        }
+                    });
+                    // 三级菜单点击
+                    $('.sub-menus li').click(function(e) {
+                        $(".sub-menus li.active").removeClass("active")
+                        $(this).addClass("active");
+                    });
+                    $('.title').click(function(){
+                        var $ul = $(this).next('ul');
+                        $('dd').find('.menuson').slideUp();
+                        if($ul.is(':visible')){
+                            $(this).next('.menuson').slideUp();
+                        }else{
+                            $(this).next('.menuson').slideDown();
+                        }
+                    });
+                },
+                dataType:"json"
+            });
+        })
+    </script>
+</head>
+
+<body style="background:#fff3e1;">
+	<div class="lefttop">
+    	<span></span><a href="index.html" target="rightFrame">首页</a>
+    </div>
+    <dl class="leftmenu">
+
+    </dl>
+    
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<link href="../../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../../js/jquery.js"></script>
+  <script type="text/javascript" src="../../js/common.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      var id = getParameter("id");
+      $.ajax({
+          type: "post",
+          url: basePath + "/sys/module/qMBNo",
+          data: "id=" + id,
+          success:function (data) {
+              $("#moduleName").text(data.name);
+              var parent = data.parent;
+              if (parent != null) {
+                  $("#moduleParent").text(data.parent.name);
+              } else {
+                  $("#moduleParent").text("无");
+              }
+              $("#moduleUrl").text(data.url);
+              var status = data.status;
+              if (status == 1) {
+                  $("#moduleStatus").text("启用");
+              } else {
+                  $("#moduleStatus").text("禁用");
+              }
+          },
+          dataType: "json"
+      });
+    });
+
+  </script>
+</head>
+
+<body>
+<div class="place"> <span>位置：</span>
+  <ul class="placeul">
+    <li><a href="../users/userList.html">系统管理</a></li>
+    <li><a href="moduleList.html">模块管理</a></li>
+    <li><a href="#">模块信息</a></li>
+  </ul>
+</div>
+<div class="formbody">
+  <div class="formtitle"><span>模块信息</span></div>
+  <ul class="forminfo">
+    <li>
+      <label>模块名称</label>
+      <cite id="moduleName"></cite>
+    </li>
+    <li>
+      <label>父模块</label>
+      <cite id="moduleParent"></cite>
+    </li>
+    <li>
+      <label>URL</label>
+      <cite id="moduleUrl"></cite>
+    </li>
+    <li>
+      <label>状态</label>
+      <cite id="moduleStatus"></cite>
+    </li>
+  </ul>
+  <div style="margin-top:20px; margin-left:20px;">
+  <input name="" type="button" class="btn" value="返回" onclick="window.history.go(-1);"/>
+  </div>
+</div>
+<script type="text/javascript">
+	$('.tablelist tbody tr:odd').addClass('odd');
+</script>
+</body>
+</html>

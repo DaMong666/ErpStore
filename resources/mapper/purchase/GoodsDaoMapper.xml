@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ztkj.purchase.dao.GoodsDao">
+    <resultMap id="goodsMap" type="com.ztkj.purchase.model.Goods">
+        <id property="id" column="f_id" />
+        <result property="model" column="f_model" />
+        <result property="status" column="f_status" />
+        <result property="unit" column="f_unit" />
+        <result property="createTime" column="f_createTime" />
+        <association property="createUser" column="f_userId" resultMap="createUserMap" />
+        <association property="goodsType" column="f_gTypeId" resultMap="goodsTypeMap" />
+    </resultMap>
+    <!--创建人-->
+    <resultMap id="createUserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userId" />
+        <result property="name" column="f_createName" />
+    </resultMap>
+    <!--商品类型-->
+    <resultMap id="goodsTypeMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_gTypeId" />
+        <result property="name" column="f_name" />
+        <result property="status" column="f_status" />
+        <association property="brand" column="f_brandId" resultMap="brandMap" />
+    </resultMap>
+    <!--品牌-->
+    <resultMap id="brandMap" type="com.ztkj.purchase.model.Brand">
+        <id property="id" column="f_brandId" />
+        <result property="name" column="f_brandName" />
+        <result property="status" column="f_status" />
+    </resultMap>
+    <!--根据品牌id查询商品类型结果集映射-->
+    <resultMap id="goodsTypeBrandMap" type="com.ztkj.purchase.model.GoodsType">
+        <id property="id" column="f_id" />
+        <result property="name" column="f_name" />
+        <result property="status" column="f_status" />
+        <association property="brand" column="f_brandId" resultMap="brandMap" />
+    </resultMap>
+    <!--分页查询-->
+    <select id="findByPage" resultMap="goodsMap">
+        SELECT * FROM
+        (SELECT t1.*,t2.f_name f_createName,t3.f_name,t3.f_brandId,t3.f_brandName,
+        ROWNUM rn FROM t_Goods t1 LEFT JOIN t_User t2
+        ON t1.f_userid=t2.f_id  LEFT JOIN (SELECT gt.*,b.f_name f_brandName FROM t_GoodsType gt
+        LEFT JOIN t_Brand b ON gt.f_brandId=b.f_id) t3
+        ON t3.f_id=t1.f_gTypeId
+        WHERE
+        <![CDATA[
+        ROWNUM<=#{endIndex}
+        ]]>
+        <if test="goodsParam.model!=null and goodsParam.model!=''">
+            AND t1.f_model LIKE '%' || #{goodsParam.model} || '%'
+        </if>
+        <if test="goodsParam.brandId != null and goodsParam.brandId != 0">
+            and t3.f_brandId = #{goodsParam.brandId}
+        </if>
+        <if test="goodsParam.goodsTypeId != null and goodsParam.goodsTypeId != ''">
+            and t3.f_id = #{goodsParam.goodsTypeId}
+        </if>
+        <if test="goodsParam.status!=null and goodsParam.status!=''">
+            AND t1.f_status=#{goodsParam.status}
+        </if>
+
+        order by t1.f_Id desc
+        ) WHERE rn>=#{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        SELECT COUNT(t1.f_id) FROM t_Goods t1 LEFT JOIN t_User t2
+        ON t1.f_userid=t2.f_id  LEFT JOIN (SELECT gt.*,b.f_name f_brandName FROM t_GoodsType gt
+        LEFT JOIN t_Brand b ON gt.f_brandId=b.f_id) t3
+        ON t3.f_id=t1.f_gTypeId
+        <where>
+            <if test="goodsParam.model!=null and goodsParam.model!=''">
+                AND t1.f_model LIKE '%' || #{goodsParam.model} || '%'
+            </if>
+            <if test="goodsParam.brandId != null and goodsParam.brandId != 0">
+                and t3.f_brandId = #{goodsParam.brandId}
+            </if>
+            <if test="goodsParam.goodsTypeId != null and goodsParam.goodsTypeId != ''">
+                and t3.f_id = #{goodsParam.goodsTypeId}
+            </if>
+            <if test="goodsParam.status!=null and goodsParam.status!=''">
+                AND t1.f_status=#{goodsParam.status}
+            </if>
+        </where>
+    </select>
+    <!--查询全部-->
+    <select id="findAll" resultMap="goodsMap">
+        select * from t_Goods
+    </select>
+
+    <!--查找所有品牌-->
+    <select id="findAllBrand" resultMap="brandMap">
+        select f_id f_brandId,f_name f_brandName,f_status from t_Brand order by f_id
+    </select>
+    <!--根据品牌id查询所有的商品类型-->
+    <select id="findAllGoodsTypeByBrandId" resultMap="goodsTypeBrandMap">
+        select * from t_goodsType where f_brandId = #{brandId}
+    </select>
+
+    <!--添加-->
+    <insert id="add">
+      INSERT INTO t_Goods(f_id,f_gTypeId,f_model,f_unit,f_status,f_createtime,f_userId)
+        values(seq_goods.nextval,#{goods.goodsType.id},#{goods.model},#{goods.unit},#{goods.status},
+      #{goods.createTime},#{goods.createUser.id})
+    </insert>
+    <!--根据id查询-->
+    <select id="findById" resultMap="goodsMap">
+        SELECT t1.*,t2.f_name f_createName,t3.f_name,t3.f_brandId,t3.f_brandName
+        FROM t_Goods t1 LEFT JOIN t_User t2
+        ON t1.f_userid=t2.f_id  LEFT JOIN (SELECT gt.*,b.f_name f_brandName FROM t_GoodsType gt
+        LEFT JOIN t_Brand b ON gt.f_brandId=b.f_id) t3
+        ON t3.f_id=t1.f_gTypeId WHERE t1.f_id=#{id}
+    </select>
+    <!--修改-->
+    <update id="update">
+        update t_Goods
+        <set>
+            <if test="goods.goodsType.id != null and goods.goodsType.id != 0">
+                f_gTypeId = #{goods.goodsType.id},
+            </if>
+            <if test="goods.model!=null and goods.model!=''">
+                f_model=#{goods.model},
+            </if>
+            <if test="goods.status!=null and goods.status != ''">
+                f_status=#{goods.status},
+            </if>
+        </set>
+        where f_id=#{goods.id}
+    </update>
+    <!--恢复-->
+    <update id="recover">
+        update t_Goods set f_status='1' where f_id=#{id}
+    </update>
+    <!--注销-->
+    <update id="cancel">
+        update t_Goods set f_status='0' where f_id=#{id}
+    </update>
+</mapper>

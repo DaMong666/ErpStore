@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.sys.dao.UserDao">
+    
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_id" />
+        <result property="no" column="f_no" />
+        <result property="name" column="f_name" />
+        <result property="pass" column="f_pass" />
+        <result property="sex" column="f_sex" />
+        <result property="tel" column="f_tel" />
+        <result property="age" column="age" />
+        <result property="birthDay" column="f_birthDay" jdbcType="DATE" />
+        <result property="status" column="f_status" />
+        <result property="hireDate" column="f_hireDate" jdbcType="TIMESTAMP" />
+        <result property="leaveDate" column="f_leaveDate" jdbcType="TIMESTAMP" />
+        <result property="loginTime" column="f_loginTime" />
+        <association property="positionNo" column="f_positionNo" resultMap="positionMap" />
+    </resultMap>
+
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_positionNo" />
+        <result property="name" column="f_positionName" />
+        <association property="deptNo" column="f_deptNo" resultMap="deptMap" />
+    </resultMap>
+
+    <resultMap id="deptMap" type="com.ztkj.sys.model.Dept">
+        <id property="no" column="f_deptNo" />
+        <result property="name" column="f_deptName" />
+    </resultMap>
+
+    <!--登录查询-->
+    <select id="login" resultMap="userMap">
+        SELECT U.*, T.F_POSITIONNAME, T.F_DEPTNO, T.F_DEPTNAME
+            FROM T_USER U,
+                (SELECT P.F_NO F_POSITIONNO,
+                    P.F_NAME F_POSITIONNAME,
+                    P.F_DEPTNO,
+                    D.F_NAME F_DEPTNAME
+                  FROM T_POSITION P, T_DEPT D
+                  WHERE P.F_DEPTNO = D.F_NO
+                  AND P.F_STATUS = '1'
+                  AND D.F_STATUS = '1') T
+            WHERE U.F_POSITIONNO = T.F_POSITIONNO
+            AND U.F_NO = #{user.no}
+            AND U.F_PASS = #{user.pass}
+            AND U.F_STATUS = '1'
+    </select>
+
+    <!--修改登录时间，并修改登录状态为 1不可登录-->
+    <update id="updateLoginTime">
+        UPDATE t_user SET f_LoginTime = SYSDATE WHERE f_id = #{user.id}
+    </update>
+
+    <!--添加用户-->
+    <insert id="addUser">
+        <selectKey keyProperty="user.id" resultType="int" order="BEFORE">
+            SELECT seq_user.nextVal FROM dual
+        </selectKey>
+        INSERT INTO t_user(f_id,f_no,f_name,f_pass,f_sex,
+                           f_tel,f_birthDay,f_positionNo,f_hireDate,f_status)
+        VALUES (#{user.id},#{user.no},#{user.name},#{user.pass},#{user.sex},
+                #{user.tel},#{user.birthDay},#{user.positionNo.no},sysdate,'1')
+    </insert>
+
+    <!--获取所有部门-->
+    <select id="findAllDept" resultMap="deptMap">
+        SELECT f_no AS f_deptNo,f_name AS f_deptName FROM t_dept WHERE f_status = '1'
+    </select>
+
+    <!--根据部门No获取职位-->
+    <select id="findPositionByDeptNo" resultMap="positionMap">
+        SELECT F_NO AS F_POSITIONNO, F_NAME AS F_POSITIONNAME, F_DEPTNO
+        FROM T_POSITION
+        WHERE F_STATUS = '1'
+        AND f_deptNo = #{deptNo}
+    </select>
+
+    <!--获取员工No-->
+    <select id="getNo" resultType="Integer">
+        SELECT max(f_no)+1 FROM t_user WHERE f_positionNo = #{positionNo}
+    </select>
+
+    <!--模糊分页查询-->
+    <select id="findByPage" resultMap="userMap">
+        SELECT T1.*
+        FROM (SELECT U.*,ceil(months_between(SYSDATE,f_birthDay)/12) AS age, T.F_POSITIONNAME, T.F_DEPTNO, T.F_DEPTNAME, ROWNUM RN
+        FROM T_USER U
+        LEFT JOIN (SELECT P.F_NO F_POSITIONNO,
+        P.F_NAME F_POSITIONNAME,
+        P.F_DEPTNO,
+        D.F_NAME F_DEPTNAME
+        FROM T_POSITION P, T_DEPT D
+        WHERE P.F_DEPTNO = D.F_NO) T ON U.F_POSITIONNO =
+        T.F_POSITIONNO
+        <where>
+            <![CDATA[and ROWNUM <= #{endIndex}]]>
+            <if test="user.no != null and user.no != ''">
+                and F_NO like  '%'||#{user.no}||'%'
+            </if>
+            <if test="user.name != null and user.name != ''">
+                and F_NAME like  '%'||#{user.name}||'%'
+            </if>
+            <if test="user.positionNo != null and user.positionNo.deptNo.no != 0">
+                and F_DEPTNO = #{user.positionNo.deptNo.no}
+            </if>
+            <if test="user.status != null and user.status != -1">
+                and F_STATUS = #{user.status}
+            </if>
+        </where>
+        ) T1 WHERE RN >= #{startIndex}
+    </select>
+
+    <!--模糊分页统计-->
+    <select id="countPage" resultType="int">
+        SELECT COUNT(F_NO)
+        FROM T_USER U
+        LEFT JOIN (SELECT P.F_NO F_POSITIONNO,
+        P.F_NAME F_POSITIONNAME,
+        P.F_DEPTNO,
+        D.F_NAME F_DEPTNAME
+        FROM T_POSITION P, T_DEPT D
+        WHERE P.F_DEPTNO = D.F_NO) T ON U.F_POSITIONNO =
+        T.F_POSITIONNO
+        <where>
+            <if test="user.no != null and user.no != ''">
+                and F_NO like  '%'||#{user.no}||'%'
+            </if>
+            <if test="user.name != null and user.name != ''">
+                and F_NAME like  '%'||#{user.name}||'%'
+            </if>
+            <if test="user.positionNo != null and user.positionNo.deptNo.no != 0">
+                and F_DEPTNO = #{user.positionNo.deptNo.no}
+            </if>
+            <if test="user.status != null and user.status != -1">
+                and F_STATUS = #{user.status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 离职 -->
+    <update id="cancel">
+        UPDATE t_user SET f_status = '0',f_leaveDate = SYSDATE WHERE f_id = #{id}
+    </update>
+
+    <!-- 在职 -->
+    <update id="recover">
+        UPDATE t_user SET f_status = '1',f_leaveDate = NULL WHERE f_id =  #{id}
+    </update>
+
+    <!-- 重置密码 -->
+    <update id="resetPass">
+        UPDATE t_user SET f_pass = #{pass} WHERE f_id = #{id}
+    </update>
+
+    <!--根据Id查询-->
+    <select id="findById" resultMap="userMap">
+        SELECT U.*, T.F_POSITIONNAME, T.F_DEPTNO, T.F_DEPTNAME
+        FROM T_USER U,
+        (SELECT P.F_NO F_POSITIONNO,
+        P.F_NAME F_POSITIONNAME,
+        P.F_DEPTNO,
+        D.F_NAME F_DEPTNAME
+        FROM T_POSITION P, T_DEPT D
+        WHERE P.F_DEPTNO = D.F_NO) T
+        WHERE U.F_POSITIONNO = T.F_POSITIONNO
+        AND U.F_ID = #{id}
+    </select>
+    
+    <!--修改-->
+    <update id="update">
+        UPDATE T_USER
+        <set>
+            F_NO = #{user.no}, F_NAME = #{user.name}, F_SEX = #{user.sex},  F_BIRTHDAY = #{user.birthDay},
+            F_POSITIONNO = #{user.positionNo.no}, F_TEL = #{user.tel},
+            <choose>
+                <when test="user.status == 1">
+                    F_STATUS = '1' , f_leaveDate = null,
+                </when>
+                <when test="user.status == 0">
+                    F_STATUS = '0' , f_leaveDate = sysdate,
+                </when>
+            </choose>
+        </set>
+        WHERE F_ID = #{user.id}
+    </update>
+
+    <!--修改个人信息-->
+    <update id="updateMy">
+        UPDATE T_USER set
+            F_NAME = #{user.name}, F_SEX = #{user.sex},  F_BIRTHDAY = #{user.birthDay},F_TEL = #{user.tel},f_pass = #{user.pass}
+                WHERE F_ID = #{user.id}
+    </update>
+
+</mapper>

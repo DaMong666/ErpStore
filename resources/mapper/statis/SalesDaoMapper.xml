@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.statis.dao.SalesDao">
+    <!--结果集映射-->
+    <resultMap id="salesMap" type="com.ztkj.statis.model.Sales">
+        <id property="rownum" column="rn"/>
+        <result property="summoney" column="f_sum"/>
+        <result property="count" column="f_count"/>
+        <association property="cusname" column="f_cusid" resultMap="customerMap"/>
+        <association property="order" column="f_orderNo" resultMap="orderMap"/>
+    </resultMap>
+
+    <resultMap id="customerMap" type="com.ztkj.market.model.Customer">
+        <id property="id" column="f_cusid"/>
+        <result property="name" column="f_cusname"/>
+        <result property="sex" column="f_sex"/>
+        <result property="tel" column="f_tel"/>
+        <result property="company" column="f_company"/>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <result property="address" column="f_address"/>
+        <result property="description" column="f_description"/>
+        <result property="allocateTime" column="f_allocateTime"/>
+        <association property="city" column="f_areaId" resultMap="cityMap"/>
+        <association property="createUser" column="f_createId" resultMap="createMap"/>
+        <association property="user" column="f_userId" resultMap="userMap"/>
+    </resultMap>
+
+    <resultMap id="orderMap" type="com.ztkj.market.model.Order">
+        <id property="orderNo" column="f_orderNo"/>
+        <result property="createTime" column="f_createTime"/>
+        <result property="money" column="f_money"/>
+        <association property="createUser" column="f_createId" resultMap="createMap"/>
+    </resultMap>
+
+    <!-- 所属区域市 -->
+    <resultMap id="cityMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="f_areaId"/>
+        <result property="name" column="f_cityname"/>
+        <association property="proId" column="f_proid" resultMap="provinceMap"/>
+    </resultMap>
+
+    <!-- 所属区域省 -->
+    <resultMap id="provinceMap" type="com.ztkj.sys.model.Province">
+        <id property="proId" column="f_proid"/>
+        <result property="name" column="f_proname"/>
+    </resultMap>
+
+    <!-- 创建人 -->
+    <resultMap id="createMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_createid"/>
+        <result property="name" column="f_createName"/>
+    </resultMap>
+
+    <!-- 客户人员 -->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userid"/>
+        <result property="name" column="USERNAME"/>
+    </resultMap>
+
+    <!--营销统计-->
+    <select id="findByPage" resultMap="salesMap">
+        select t.* from
+        (select t1.f_id f_cusid,t1.f_name f_cusName,
+        t1.f_areaid f_areaid,t2.f_count f_count,t2.f_sum f_sum,
+        t3.city_name f_cityname,t4.pro_id f_proid,t4.pro_name f_proname,rownum rn
+        from t_customer t1 right join
+        (select f_custormer,count(f_orderNo) f_count,sum(f_money) f_sum from t_order
+        where f_status = '2'
+            <if test="salesParam.beginTime != null">
+                and f_createtime >= #{salesParam.beginTime}
+            </if>
+            <if test="salesParam.endTime !=null">
+                <![CDATA[and f_createtime <= #{salesParam.endTime}]]>
+            </if>
+        group by f_custormer) t2
+        on t1.f_id = t2.f_custormer
+        left join t_city t3 on t1.f_areaid = t3.city_id
+        left join t_province t4 on t3.pro_id = t4.pro_id
+        <where>
+            <if test="salesParam.cusname != null and salesParam.cusname != ''">
+                and t1.f_name like '%'||#{salesParam.cusname}||'%'
+            </if>
+            <if test="salesParam.city != null and salesParam.city != ''">
+                and t1.f_areaid = #{salesParam.city}
+            </if>
+            <if test="salesParam.province != null and salesParam.province != ''">
+                and t4.pro_id = #{salesParam.province}
+            </if>
+            <![CDATA[
+                and rownum <= #{endIndex}
+            ]]>
+        </where>
+        ) t where rn >= #{startIndex}
+    </select>
+
+    <select id="countByPage" resultType="int">
+        select count(t1.f_id)
+        from t_customer t1 right join
+        (select f_custormer,count(f_orderNo) f_count,sum(f_money) f_sum from t_order
+        where f_status = '2'
+        <if test="salesParam.beginTime != null">
+            and f_createtime >= #{salesParam.beginTime}
+        </if>
+        <if test="salesParam.endTime !=null">
+            <![CDATA[and f_createtime <= #{salesParam.endTime}]]>
+        </if>
+        group by f_custormer) t2
+        on t1.f_id = t2.f_custormer
+        left join t_city t3 on t1.f_areaid = t3.city_id
+        left join t_province t4 on t3.pro_id = t4.pro_id
+        <where>
+            <if test="salesParam.cusname != null and salesParam.cusname != ''">
+                and t1.f_name like '%'||#{salesParam.cusname}||'%'
+            </if>
+            <if test="salesParam.city != null and salesParam.city != ''">
+                and t1.f_areaid = #{salesParam.city}
+            </if>
+            <if test="salesParam.province != null and salesParam.province != ''">
+                and t4.pro_id = #{salesParam.province}
+            </if>
+        </where>
+    </select>
+
+    <!--数据统计之查看详情-->
+    <select id="findOrderByCustomer" resultMap="salesMap">
+        select t.* from
+        (select t1.f_id f_cusid,t1.f_name f_cusname,t2.f_orderno,t3.f_sum f_count,t2.f_money,t2.f_createtime,
+        t2.f_createid,t4.f_name f_createName,rownum rn
+        from t_order t2 left join t_customer t1 on t1.f_id = t2.f_custormer left join
+        (select f_orderNo,sum(f_num) f_sum from t_Orderdetail group by f_orderNo) t3
+        on t2.f_orderno = t3.f_orderNo
+        left join t_user t4 on t2.f_createid = t4.f_id where t1.f_id = #{id} and t2.f_status = '2' and rownum <![CDATA[<= #{endIndex}]]>) t where rn >= #{startIndex}
+    </select>
+    <select id="countOrderByCustomer" resultType="int">
+        select count(t2.f_orderNo)
+        from t_order t2 left join t_customer t1 on t1.f_id = t2.f_custormer left join
+        (select f_orderNo,sum(f_num) f_sum from t_Orderdetail group by f_orderNo) t3
+        on t2.f_orderno = t3.f_orderNo
+        left join t_user t4 on t2.f_createid = t4.f_id where t1.f_id = #{id} and t2.f_status = '2'
+    </select>
+
+</mapper>

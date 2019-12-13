@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ztkj.purchase.dao.PurchaseExamineDao">
+    <resultMap id="purchaseMap" type="com.ztkj.purchase.model.Purchase">
+        <id property="purchaseNo" column="f_purchaseNo" />
+        <result property="status" column="f_status" />
+        <result property="createTime" column="f_createTime" />
+        <result property="money" column="f_money" />
+        <result property="checkTime" column="f_checkTime" />
+        <result property="opinion" column="f_opinion" />
+        <association property="createUser" column="f_createId" resultMap="createUserMap" />
+        <association property="checkUser" column="f_checkId" resultMap="checkUserMap" />
+    </resultMap>
+    <!--商品明细-->
+    <resultMap id="purchaseDetailMap" type="com.ztkj.purchase.model.PurchaseDetail">
+        <id property="id" column="f_id" />
+        <result property="num" column="f_num" />
+        <result property="price" column="f_price" />
+        <result property="money" column="f_pdmoney" />
+        <association property="purchase" column="f_purchaseNo" resultMap="purchaseMap" />
+        <association property="goods" column="f_goodsId" resultMap="goodsMap" />
+        <association property="vendor" column="f_vendorId" resultMap="vendorMap" />
+    </resultMap>
+
+    <!--创建人-->
+    <resultMap id="createUserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_createId" />
+        <result property="name" column="f_createName" />
+    </resultMap>
+    <!--审核人-->
+    <resultMap id="checkUserMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_checkId" />
+        <result property="name" column="f_checkName" />
+    </resultMap>
+
+    <!--分页查询-->
+    <select id="findByPage" resultMap="purchaseMap">
+        SELECT * FROM
+        (SELECT t1.*,t2.f_name f_createName,t3.f_name f_checkName,ROWNUM rn FROM t_Purchase t1 LEFT JOIN t_User t2
+        ON t1.f_createid=t2.f_id  LEFT JOIN t_User t3 ON t1.f_checkid=t3.f_id
+        <where>
+            <if test="purchaseParam.purchaseNo!=null and purchaseParam.purchaseNo!=''">
+                AND t1.f_purchaseNo=#{purchaseParam.purchaseNo}
+            </if>
+            <if test="purchaseParam.beginCreateTime!=null ">
+                AND t1.f_createTime>=#{purchaseParam.beginCreateTime}
+            </if>
+            <if test="purchaseParam.endCreateTime!=null ">
+                AND t1.f_createTime <![CDATA[ <=#{purchaseParam.endCreateTime}]]>
+            </if>
+            <if test="purchaseParam.beginMoney!=null and purchaseParam.beginMoney!=0">
+                AND t1.f_money>=#{purchaseParam.beginMoney}
+            </if>
+            <if test="purchaseParam.endMoney!=null and purchaseParam.endMoney!=0">
+                AND t1.f_money <![CDATA[ <=#{purchaseParam.endMoney}]]>
+            </if>
+            AND t1.f_checkId =#{checkId}
+            AND t1.f_status='1'
+        </where>
+        order by t1.f_purchaseNo desc
+        ) WHERE rn between #{startIndex} and #{endIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        SELECT count(t1.f_purchaseNo) FROM t_Purchase t1 LEFT JOIN t_User t2
+        ON t1.f_createid=t2.f_id  LEFT JOIN t_User t3 ON t1.f_checkid=t3.f_id
+        <where>
+            <if test="purchaseParam.purchaseNo!=null and purchaseParam.purchaseNo!=''">
+                AND t1.f_purchaseNo=#{purchaseParam.purchaseNo}
+            </if>
+            <if test="purchaseParam.beginCreateTime!=null">
+                AND t1.f_createTime>=#{purchaseParam.beginCreateTime}
+            </if>
+            <if test="purchaseParam.endCreateTime!=null">
+                AND t1.f_createTime <![CDATA[<=#{purchaseParam.endCreateTime}]]>
+            </if>
+            <if test="purchaseParam.beginMoney!=null and purchaseParam.beginMoney!=0">
+                AND t1.f_money>=#{purchaseParam.beginMoney}
+            </if>
+            <if test="purchaseParam.endMoney!=null and purchaseParam.endMoney!=0">
+                AND t1.f_money <![CDATA[<=#{purchaseParam.endMoney}]]>
+            </if>
+            AND t1.f_checkId =#{checkId}
+                AND t1.f_status='1'
+        </where>
+    </select>
+    <!--根据采购单编号获取采购单-->
+    <select id="findByPurchaseNo" resultMap="purchaseMap">
+        SELECT P.*, U1.F_NAME F_CREATENAME, U2.F_NAME F_CHECKNAME
+        FROM T_PURCHASE P
+        LEFT JOIN T_USER U1 ON U1.F_ID = P.F_CREATEID
+        LEFT JOIN T_USER U2 ON U2.F_ID = P.F_CHECKID
+        WHERE P.F_PURCHASENO= #{purchaseNo}
+    </select>
+    <!--审核-->
+    <update id="update">
+        update t_purchase
+        <set>
+            <if test="purchase.opinion != null and purchase.opinion != ''">
+                f_opinion = #{purchase.opinion},
+            </if>
+            <if test="purchase.status!=null and purchase.status != ''">
+                f_status=#{purchase.status},
+            </if>
+            <if test="purchase.checkTime!=null">
+                f_checkTime=#{purchase.checkTime},
+            </if>
+        </set>
+        where f_purchaseNo=#{purchase.purchaseNo}
+    </update>
+
+</mapper>

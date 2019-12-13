@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ztkj.storage.dao.StorageDao">
+    <!--结果集映射resultMap-->
+    <resultMap id="storageMap" type="com.ztkj.storage.model.Storage">
+        <id property="id" column="f_Id"/><!--主键-->
+        <result property="name" column="f_name"/>
+        <result property="address" column="f_address"/>
+        <result property="tel" column="f_tel"/>
+        <result property="description" column="f_description"/>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <!--遇见对方是一，就写association-->
+        <association property="principalPerson" column="f_principalId" resultMap="principalMap"/>
+        <association property="createPerson" column="f_userId" resultMap="createMap"/>
+        <association property="city" column="f_areaId" resultMap="cityMap"/>
+    </resultMap>
+    <!--仓库负责人-->
+    <resultMap id="principalMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_principalId"/>
+        <result property="name" column="principalName"/>
+    </resultMap>
+    <!--仓库创建人-->
+    <resultMap id="createMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userId"/>
+        <result property="name" column="createName"/>
+    </resultMap>
+    <!--仓库所属城市-->
+    <resultMap id="cityMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="f_areaId"/>
+        <result property="name" column="city_name"/>
+        <association property="proId" column="pro_id" resultMap="provinceMap"/>
+    </resultMap>
+    <!--根据省份id查询城市结果集映射-->
+    <resultMap id="citypMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="city_id"/>
+        <result property="name" column="city_name"/>
+        <association property="proId" column="pro_id" resultMap="provinceMap"/>
+    </resultMap>
+    <!--仓库所属省份-->
+    <resultMap id="provinceMap" type="com.ztkj.sys.model.Province">
+        <id property="proId" column="pro_id"/>
+        <result property="name" column="pro_name"/>
+    </resultMap>
+    <!--1.仓库负责人（主管级别）映射，2.判断是否是经理级别映射-->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_id"/>
+        <result property="name" column="f_name"/>
+        <association property="positionNo" column="f_positionNo" resultMap="positionMap"/>
+    </resultMap>
+    <!--判断是否是经理级别映射-->
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_positionNo"/>
+        <result property="name" column="positionName"/>
+    </resultMap>
+    <!--分页+模糊查询-->
+    <select id="findAllByPage"  resultMap="storageMap">
+        select * from (
+        select s.*,u.f_name as principalName,u1.f_name as createName,c.*,p.pro_name,rownum rn
+        from t_storage s
+        left join t_user u
+        on s.f_principalid = u.f_id
+        left join t_user u1
+        on s.f_userid = u1.f_id
+        left join t_city c
+        on s.f_areaid = c.city_id
+        left join t_province p
+        on c.pro_id = p.pro_id
+        where <![CDATA[rownum <= #{endIndex}]]>
+        <if test="storageName != null and storageName != ''">
+            and s.f_name like '%'||#{storageName}||'%'
+        </if>
+        <if test="provinceId != null and provinceId != 0">
+            and c.pro_id = #{provinceId}
+        </if>
+        <if test="cityId != null and cityId != 0">
+            and c.city_id = #{cityId}
+        </if>
+        <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+            and s.f_principalId = #{principalId}
+        </if>
+        order by s.f_Id desc
+        ) where rn >= #{startIndex}
+    </select>
+
+    <!--分页统计-->
+    <select id="countByPage" resultType="int">
+        select count(*)
+        from t_storage s
+        left join t_user u
+        on s.f_principalid = u.f_id
+        left join t_user u1
+        on s.f_userid = u1.f_id
+        left join t_city c
+        on s.f_areaid = c.city_id
+        left join t_province p
+        on c.pro_id = p.pro_id
+        <where>
+            <if test="storageName != null and storageName != ''">
+                and s.f_name like '%'||#{storageName}||'%'
+            </if>
+            <if test="provinceId != null and provinceId != 0">
+                and c.pro_id = #{provinceId}
+            </if>
+            <if test="cityId != null and cityId != 0">
+                and c.city_id = #{cityId}
+            </if>
+            <if test="principalId != null and principalId != 3 and principalId != 5 and principalId != 43">
+                and s.f_principalId = #{principalId}
+            </if>
+        </where>
+    </select>
+
+    <!--查找所有省份-->
+    <select id="findAllProvince" resultMap="provinceMap">
+        select * from t_province order by pro_id
+    </select>
+    <!--查询所有省份的id name-->
+    <select id="findAllCity" resultMap="citypMap">
+        select city_id,city_name from t_city
+    </select>
+    <!--根据省份id查询所有的城市-->
+    <select id="findAllCityBypId" resultMap="citypMap">
+        select * from t_city where pro_id = #{provinceId}
+    </select>
+
+    <!---->
+    <select id="ifisMgr" resultMap="userMap">
+        select u.*,p.f_name as positionName
+       from t_user u
+       left join t_position p
+       on u.f_positionNo = p.f_no
+       where p.f_name like '部门经理'
+    </select>
+    <!--查询所有的负责人（必须是主管级别）-->
+    <select id="findAllPrincipalPerson" resultMap="userMap">
+        select u.*,p.f_name as positionName
+       from t_user u
+       left join t_position p
+       on u.f_positionNo = p.f_no
+       where p.f_name like '仓库%主管' and u.f_status = '1'
+    </select>
+    <!--添加仓库-->
+    <insert id="addStorage">
+        insert into t_storage(f_id,f_name,f_address,f_principalId,f_tel,f_description,f_status,f_createtime,f_userId,f_areaid)
+        values (seq_t_storage.nextval,#{storage.name},#{storage.address},
+        #{storage.principalPerson.id},#{storage.tel},
+        <if test="storage.description != null">
+            #{storage.description},
+        </if>
+        <if test="storage.description == null">
+            null,
+        </if>
+        #{storage.status},
+        #{storage.createTime,jdbcType=TIMESTAMP},#{storage.createPerson.id},#{storage.city.cityId}
+        )
+    </insert>
+    <!--根据id查看仓库信息-->
+    <select id="findStorageById" resultMap="storageMap">
+        select * from(
+        select s.*,u.f_name as principalName,u1.f_name as createName,cp.*,rownum rn
+        from t_storage s left join t_user u
+        on s.f_principalid = u.f_id
+        left join t_user u1 on s.f_userid = u1.f_id
+        left join
+        (select c.*,p.pro_name from t_city c left join t_province p on c.pro_id = p.pro_id) cp
+        on s.f_areaid = cp.city_id) where f_id = #{storageId}
+    </select>
+    <!--修改仓库-->
+    <update id="updateStorage">
+        update t_storage
+        <set>
+            <if test="storage.name != null and storage.name != ''">
+                f_name = #{storage.name},
+            </if>
+            <if test="storage.address != null and storage.address != ''">
+                f_address = #{storage.address},
+            </if>
+            <if test="storage.city != null and storage.city.cityId != 0">
+                f_areaId = #{storage.city.cityId},
+            </if>
+            <if test="storage.principalPerson != null and storage.principalPerson.id != 0">
+                F_PRINCIPALID = #{storage.principalPerson.id},
+            </if>
+            <if test="storage.tel != null">
+                f_tel = #{storage.tel},
+            </if>
+            <if test="storage.description != null">
+                f_description = #{storage.description},
+            </if>
+            <if test="storage.description == null">
+                f_description = null,
+            </if>
+            <if test="storage.status == 1">
+                f_status = #{storage.status},
+            </if>
+            <if test="storage.status == 0">
+                f_status = #{storage.status},
+            </if>
+            <if test="storage.createPerson != null and storage.principalPerson.id != 0">
+                F_USERID = #{storage.principalPerson.id},
+            </if>
+            <if test="storage.createTime != null">
+                F_CREATETIME = #{storage.createTime,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        <where>
+            f_id = #{storage.id}
+        </where>
+    </update>
+    <!--注销仓库-->
+    <update id="cancleStorage">
+        update t_storage set f_status = '0' where f_id = #{storageId}
+    </update>
+    <!--恢复仓库-->
+    <update id="recoverStorage">
+        update t_storage set f_status = '1' where f_id = #{storageId}
+    </update>
+</mapper>

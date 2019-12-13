@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.ztkj.market.dao.CustomerDao">
+    <!--结果集映射-->
+    <resultMap id="customerMap" type="com.ztkj.market.model.Customer">
+        <id property="id" column="f_id"/>
+        <result property="name" column="f_name"/>
+        <result property="sex" column="f_sex"/>
+        <result property="tel" column="f_tel"/>
+        <result property="company" column="f_company"/>
+        <result property="status" column="f_status"/>
+        <result property="createTime" column="f_createTime"/>
+        <result property="address" column="f_address"/>
+        <result property="description" column="f_description"/>
+        <result property="allocateTime" column="f_allocateTime"/>
+        <association property="city" column="f_areaId" resultMap="cityMap"/>
+        <association property="createUser" column="f_createId" resultMap="createMap"/>
+        <association property="user" column="f_userId" resultMap="userMap"/>
+    </resultMap>
+
+    <!-- 所属区域市 -->
+    <resultMap id="cityMap" type="com.ztkj.sys.model.City">
+        <id property="cityId" column="city_id"/>
+        <result property="name" column="city_name"/>
+        <association property="proId" column="pro_Id" resultMap="provinceMap"/>
+    </resultMap>
+
+    <!-- 所属区域省 -->
+    <resultMap id="provinceMap" type="com.ztkj.sys.model.Province">
+        <id property="proId" column="pro_Id"/>
+        <result property="name" column="pro_name"/>
+    </resultMap>
+
+    <!-- 创建人 -->
+    <resultMap id="createMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_createid"/>
+        <result property="name" column="CREATENAME"/>
+    </resultMap>
+
+    <!-- 客户人员 -->
+    <resultMap id="userMap" type="com.ztkj.sys.model.User">
+        <id property="id" column="f_userid"/>
+        <result property="name" column="USERNAME"/>
+        <result property="no" column="f_positionno"/>
+    </resultMap>
+
+    <!-- 客户管理分页查询 -->
+    <select id="findByPage" resultMap="customerMap">
+        SELECT * FROM
+        (SELECT C.*, ct.city_id,CT.CITY_NAME, p.pro_id, P.PRO_NAME, U1.F_NAME CREATENAME, U2.F_NAME USERNAME, ROWNUM RN
+        ,u2.f_positionno FROM T_CUSTOMER C
+        LEFT JOIN T_CITY CT ON C.F_AREAID = CT.CITY_ID
+        LEFT JOIN T_PROVINCE P ON CT.PRO_ID = P.PRO_ID
+        LEFT JOIN T_USER U1 ON C.F_CREATEID = U1.F_ID
+        LEFT JOIN T_USER U2 ON C.F_USERID = U2.F_ID
+        <where>
+            <if test="user.positionNo.no == '02002'">
+                and u2.f_positionno in (select f_no from t_position where f_mgr = #{user.positionNo.no})
+            </if>
+            <if test="user.positionNo.no == '02003'">
+                and u2.f_positionno in (select f_no from t_position where f_mgr = #{user.positionNo.no})
+            </if>
+            <if test="user.positionNo.no == '02004'">
+                and u2.f_id = #{user.id}
+            </if>
+            <if test="user.positionNo.no == '02005'">
+                and u2.f_id = #{user.id}
+            </if>
+            <if test="customer.company != null and  customer.company!= ''">
+                and c.f_company LIKE '%'||#{customer.company}||'%'
+            </if>
+            <if test="customer.name != null and  customer.name!= ''">
+                and c.f_name LIKE '%'||#{customer.name}||'%'
+            </if>
+            <if test="provinceId != null and provinceId != 0">
+                and p.pro_id = #{provinceId}
+            </if>
+            <if test="cityId != null and cityId != 0">
+                and ct.city_id = #{cityId}
+            </if>
+            <if test="customer.status != null and  customer.status!= ''">
+                and c.f_status = #{customer.status}
+            </if>
+            <choose>
+                <when test="userIsNull == 1">
+                    and c.f_userId is not null
+                </when>
+                <when test="userIsNull == 0">
+                    and c.f_userId is null
+                </when>
+            </choose>
+            <![CDATA[ and ROWNUM <= #{endIndex}]]>
+        </where>
+        ) WHERE rn >= #{startIndex}
+    </select>
+
+    <!-- 分页统计 -->
+    <select id="countByPage" resultType="int">
+        SELECT COUNT(C.F_ID)
+        FROM T_CUSTOMER C
+        LEFT JOIN T_CITY CT ON C.F_AREAID = CT.CITY_ID
+        LEFT JOIN T_PROVINCE P ON CT.PRO_ID = P.PRO_ID
+        LEFT JOIN T_USER U1 ON C.F_CREATEID = U1.F_ID
+        LEFT JOIN T_USER U2 ON C.F_USERID = U2.F_ID
+        <where>
+            <if test="user.positionNo.no == '02004'">
+                and u2.f_id = #{user.id}
+            </if>
+            <if test="user.positionNo.no == '02005'">
+                and u2.f_id = #{user.id}
+            </if>
+            <choose>
+                <when test="user.positionNo.no == '01001'">
+                </when>
+                <when test="user.positionNo.no == '02001'">
+                </when>
+                <otherwise>
+                    and u2.f_positionno in (SELECT f_no FROM t_position CONNECT BY PRIOR f_no=f_mgr START WITH f_no=#{user.positionNo.no})
+                </otherwise>
+            </choose>
+
+            <if test="customer.company != null and  customer.company!= ''">
+                and c.f_company LIKE '%'||#{customer.company}||'%'
+            </if>
+            <if test="customer.name != null and  customer.name!= ''">
+                and c.f_name LIKE '%'||#{customer.name}||'%'
+            </if>
+            <if test="provinceId != null and provinceId != 0">
+                and p.pro_id = #{provinceId}
+            </if>
+            <if test="cityId != null and cityId != 0">
+                and ct.city_id = #{cityId}
+            </if>
+            <if test="customer.status != null and  customer.status!= ''">
+                and c.f_status = #{customer.status}
+            </if>
+            <choose>
+                <when test="userIsNull == 1">
+                    and c.f_userId is not null
+                </when>
+                <when test="userIsNull == 0">
+                    and c.f_userId is null
+                </when>
+            </choose>
+        </where>
+    </select>
+
+    <!-- 根据Id查询客户 -->
+    <select id="findById" resultMap="customerMap">
+        SELECT c.*, CT.CITY_ID, CT.CITY_NAME, P.PRO_ID, P.PRO_NAME, U1.F_NAME CREATENAME
+        FROM T_CUSTOMER C
+        LEFT JOIN T_CITY CT ON C.F_AREAID = CT.CITY_ID
+        LEFT JOIN T_PROVINCE P ON CT.PRO_ID = P.PRO_ID
+        LEFT JOIN T_USER U1 ON C.F_CREATEID = U1.F_ID
+        where c.f_id = #{id}
+    </select>
+
+    <!-- 添加客户 -->
+    <insert id="addCus">
+        INSERT INTO t_customer
+        (f_id,f_name,f_sex,f_tel,f_company,f_areaid,f_status,f_createTime,f_createid,f_address,f_description)
+        VALUES
+        (seq_customer.NEXTVAL,#{customer.name},#{customer.sex},#{customer.tel},#{customer.company},#{customer.city.cityId},
+        #{customer.status},#{customer.createTime},#{customer.createUser.id},#{customer.address},#{customer.description})
+    </insert>
+
+    <!--查找所有省份-->
+    <select id="findAllProvince" resultMap="provinceMap">
+        select * from t_province order by pro_id
+    </select>
+    <!--查询所有省份的id name-->
+    <select id="findAllCity" resultMap="cityMap">
+        select city_id,city_name from t_city
+    </select>
+    <!--根据省份id查询所有的城市-->
+    <select id="findAllCityBypId" resultMap="cityMap">
+        select * from t_city where pro_id = #{provinceId}
+    </select>
+
+    <!-- 修改客户信息 -->
+    <update id="updateCus">
+        update T_CUSTOMER
+        <set>
+            <if test="customer.company != null and  customer.company!= ''">
+                f_company = #{customer.company},
+            </if>
+            <if test="customer.name != null and  customer.name!= ''">
+                f_name = #{customer.name},
+            </if>
+            <if test="customer.sex != null and  customer.sex!= ''">
+                f_sex = #{customer.sex},
+            </if>
+            <if test="customer.tel != null and  customer.tel!= ''">
+                f_tel = #{customer.tel},
+            </if>
+            <if test="customer.address != null and  customer.address!= ''">
+                f_address = #{customer.address},
+            </if>
+            <if test="customer.description != null and  customer.description!= ''">
+                f_description = #{customer.description},
+            </if>
+            <if test="customer.city.cityId != null and customer.city.cityId != 0">
+                f_areaId = #{customer.city.cityId},
+            </if>
+            <if test="customer.status != null and  customer.status!= ''">
+                f_status = #{customer.status},
+            </if>
+        </set>
+        <where>
+            f_id = #{customer.id}
+        </where>
+    </update>
+
+    <!--查询可用客户-->
+    <select id="findNiceCustomer" resultMap="customerMap">
+        select t1.*,t2.f_name from t_customer t1
+        left join t_user t2 on t1.f_userid = t2.f_id
+        where t1.f_status = '1' and t2.f_positionno in
+        (SELECT f_no FROM t_position CONNECT BY PRIOR f_no=f_mgr START WITH f_no=#{user.positionNo.no})
+        <if test="user.positionNo.no == '02004'">
+            and t2.f_id = #{user.id}
+        </if>
+        <if test="user.positionNo.no == '02005'">
+            and t2.f_id = #{user.id}
+        </if>
+    </select>
+
+    <!--恢复，注销，分配-->
+    <update id="updateStatusUp">
+        update t_customer set f_status = '1' where f_id = #{id}
+    </update>
+    <update id="updateStatusDown">
+        update t_customer set f_status = '0' where f_id = #{id}
+    </update>
+    <resultMap id="positionMap" type="com.ztkj.sys.model.Position">
+        <id property="no" column="f_no"/>
+        <result property="name" column="f_name"/>
+    </resultMap>
+    <!--查询市场部审核职位-->
+    <select id="findPosition" resultMap="positionMap">
+        select * from t_position where f_deptno = '02' and f_mgr in('02002','02003') and f_status = '1'
+    </select>
+    <!--根据职位查询在职用户-->
+    <select id="findCheckUser" resultMap="userMap">
+        select t.f_id f_userid,t.f_name userName from t_user t where t.f_positionno = #{positionno} and t.f_status = '1'
+    </select>
+    <update id="updateUser">
+        update t_customer set f_allocatetime = systimestamp,f_userid = #{userid.id} where f_id = #{id}
+    </update>
+</mapper>
